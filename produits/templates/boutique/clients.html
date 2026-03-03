@@ -1,0 +1,121 @@
+﻿{% extends 'boutique/base.html' %}
+
+{% block page_title %}Clients{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Clients</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="card">
+  <h3 style="margin-top:0;">Ajouter un client</h3>
+  <form id="clientForm" method="POST">
+    {% csrf_token %}
+    <div class="form-grid">
+      <input type="text" name="nom" placeholder="Nom du client" required>
+      <input type="text" name="telephone" placeholder="Téléphone" required>
+      <input type="email" name="email" placeholder="Email">
+      <button type="submit" class="btn btn-primary">Ajouter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Téléphone</th>
+        <th>Email</th>
+        <th>QR Code</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in clients %}
+      <tr data-id="{{ c.id }}">
+        <td>{{ c.id }}</td>
+        <td class="editable" data-field="nom">{{ c.nom }}</td>
+        <td class="editable" data-field="telephone">{{ c.telephone }}</td>
+        <td class="editable" data-field="email">{{ c.email }}</td>
+        <td class="qr-code">
+          {% if c.qr_code %}
+            <img src="{{ c.qr_code.url }}" style="height:40px; width:40px; object-fit:cover;" />
+          {% else %}N/A{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="muted">Pas de clients</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  const updateClientBaseUrl = "{% url 'update_client' 0 %}";
+
+  function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    const messages = document.querySelectorAll('.alert');
+    if (messages.length) {
+      setTimeout(() => messages.forEach(m => m.remove()), 5000);
+    }
+
+    const form = document.getElementById('clientForm');
+    form.addEventListener('submit', function() {
+      setTimeout(() => form.reset(), 100);
+    });
+  });
+
+  document.querySelectorAll("td.editable").forEach(cell => {
+    cell.setAttribute("contenteditable", "true");
+
+    cell.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        cell.blur();
+      }
+    });
+
+    cell.addEventListener("blur", function() {
+      const row = cell.closest("tr");
+      const clientId = row.dataset.id;
+      const field = cell.dataset.field;
+      const value = cell.innerText.trim();
+
+      fetch(updateClientBaseUrl.replace("/0/", `/${clientId}/`), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCsrfToken()
+        },
+        body: JSON.stringify({ field: field, value: value })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (data.qr_code_url) {
+            const qrCell = row.querySelector(".qr-code img");
+            if (qrCell) {
+              qrCell.src = data.qr_code_url + "?t=" + new Date().getTime();
+            }
+          }
+        } else {
+          alert("Erreur: " + data.error);
+        }
+      })
+      .catch(err => console.error(err));
+    });
+  });
+</script>
+{% endblock %}

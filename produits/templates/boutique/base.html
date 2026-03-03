@@ -1,0 +1,126 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Boutique DUNIYA</title>
+  <link rel="stylesheet" href="{% static 'app.css' %}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <div class="brand">Boutique INOVA</div>
+        <button class="sidebar-collapse-btn" id="sidebarCollapse" type="button" title="Reduire ou agrandir">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="nav-section">
+        <a class="nav-link" data-nav href="{% url 'dashboard' %}" title="Dashboard">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 13H11V21H3V13ZM13 3H21V11H13V3ZM13 13H21V21H13V13ZM3 3H11V11H3V3Z" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Dashboard</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'produits' %}" title="Produits">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7L12 3L21 7L12 11L3 7Z" stroke="currentColor" stroke-width="2"/><path d="M3 7V17L12 21L21 17V7" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Produits</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'stock' %}" title="Stock">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5H20V19H4V5Z" stroke="currentColor" stroke-width="2"/><path d="M8 9H16M8 13H16" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Stock</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'inventaire' %}" title="Inventaire">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3H18V21H6V3Z" stroke="currentColor" stroke-width="2"/><path d="M9 8H15M9 12H15M9 16H13" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Inventaire</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'clients' %}" title="Clients">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M16 11C17.657 11 19 9.657 19 8C19 6.343 17.657 5 16 5C14.343 5 13 6.343 13 8C13 9.657 14.343 11 16 11Z" stroke="currentColor" stroke-width="2"/><path d="M8 12C9.657 12 11 10.657 11 9C11 7.343 9.657 6 8 6C6.343 6 5 7.343 5 9C5 10.657 6.343 12 8 12Z" stroke="currentColor" stroke-width="2"/><path d="M3 19C3 16.791 5.239 15 8 15C10.761 15 13 16.791 13 19" stroke="currentColor" stroke-width="2"/><path d="M13 19C13 16.791 15.239 15 18 15C20.761 15 23 16.791 23 19" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Clients</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'ventes' %}" title="Ventes">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 6H20V20H4V6Z" stroke="currentColor" stroke-width="2"/><path d="M8 10H16M8 14H13" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Ventes</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'factures' %}" title="Factures">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3H18V21L15 19L12 21L9 19L6 21V3Z" stroke="currentColor" stroke-width="2"/><path d="M9 8H15M9 12H15" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Factures</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'comptabilite' %}" title="Comptabilité">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20H20" stroke="currentColor" stroke-width="2"/><path d="M7 16V9" stroke="currentColor" stroke-width="2"/><path d="M12 16V5" stroke="currentColor" stroke-width="2"/><path d="M17 16V11" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Comptabilité</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'commandes_magasin' %}" title="Commandes magasin">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7H21V17H3V7Z" stroke="currentColor" stroke-width="2"/><path d="M7 11H17" stroke="currentColor" stroke-width="2"/><path d="M7 14H13" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Commandes Magasin</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'bon_commandes' %}" title="Bons de commande">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 4H20V20H4V4Z" stroke="currentColor" stroke-width="2"/><path d="M8 8H16M8 12H16M8 16H12" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Bons de commande</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'proformas' %}" title="Factures proforma">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M7 3H17L21 7V21H3V3H7Z" stroke="currentColor" stroke-width="2"/><path d="M7 9H17M7 13H17M7 17H12" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Factures proforma</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'bons_achat' %}" title="Bons d'achat">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 8H21V16H3V8Z" stroke="currentColor" stroke-width="2"/><path d="M8 8V16M16 8V16" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Bons d'achat</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'remises_report' %}" title="Rapport remises">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M10 19V9M16 19V13M22 19V3" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Rapport remises</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'personnel' %}" title="Personnel">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 12C14.209 12 16 10.209 16 8C16 5.791 14.209 4 12 4C9.791 4 8 5.791 8 8C8 10.209 9.791 12 12 12Z" stroke="currentColor" stroke-width="2"/><path d="M4 20C4 16.686 7.582 14 12 14C16.418 14 20 16.686 20 20" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Personnel</span>
+        </a>
+        <a class="nav-link" data-nav href="{% url 'salaires' %}" title="Salaires">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7H21V17H3V7Z" stroke="currentColor" stroke-width="2"/><path d="M7 12H17" stroke="currentColor" stroke-width="2"/></svg></span>
+          <span class="nav-text">Salaires</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-footer-label">Connecte :</div>
+        <strong class="sidebar-footer-user">{{ request.user.username }}</strong>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="sidebar-toggle" id="sidebarToggle">Menu</button>
+        <h1>{% block page_title %}Boutique INOVA{% endblock %}</h1>
+        <div class="topbar-actions">
+          <div class="muted">{{ request.user.username }}</div>
+          <a href="{% url 'logout_page' %}" class="btn btn-outline">Déconnexion</a>
+          <button
+            type="button"
+            id="themeToggle"
+            class="btn btn-outline theme-toggle-btn"
+            aria-pressed="false"
+            aria-label="Activer mode sombre"
+            title="Activer mode sombre"
+          >
+            <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M20 15.5A8.5 8.5 0 1 1 8.5 4A7 7 0 0 0 20 15.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 2V4M12 20V22M22 12H20M4 12H2M19.07 4.93L17.66 6.34M6.34 17.66L4.93 19.07M19.07 19.07L17.66 17.66M6.34 6.34L4.93 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script src="{% static 'app.js' %}"></script>
+</body>
+</html>

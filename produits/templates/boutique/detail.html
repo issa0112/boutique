@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+{% block Produit %}
+{% if messages %}
+<ul class="messages">
+  {% for message in messages %}
+    <li {% if message.tags %} class="{{ message.tags }}" style="color: green;" {% endif %}>
+      {{ message }}
+    </li>
+  {% endfor %}
+</ul>
+{% endif %}
+<h2><span style="color: aqua;"></span> voire les detail du Produit {{n.id}}</h2>
+
+<div class="products-area-wrapper tableView">
+  <style>
+    /* From Uiverse.io by CYBWEBALI */ 
+.btn {
+  display: grid;
+  place-items: center;
+  background: #56b5e5;
+  padding: 0.5em;
+  border-radius: 10px;
+  /* box-shadow: 6px 6px 10px -1px rgba(0,0,0,0.15),
+	      -6px -2px 5px -1px rgba(255,255,255,0.7); */
+  border: 1px solid rgba(0,0,0,0);
+  cursor: pointer;
+  transition: transform 0.5s;
+}
+
+.btn:hover {
+  box-shadow: inset 4px 4px 6px -1px rgba(0,0,0,0.2),
+	      inset -4px -4px 6px -1px rgba(255,255,255,0.7),
+	      -0.5px -0.5px 0px rgba(255,255,255,1),
+	      0.5px 0.5px 0px rgba(0,0,0,0.15),
+	      0px 12px 10px -10px rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.1);
+  transform: translateY(0.5em);
+}
+
+.btn svg {
+  transition: transform 0.5s;
+}
+
+.btn:hover svg {
+  transform: scale(0.9);
+  fill: #333333;
+}
+
+
+  .button{
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: center;
+    color: white;
+  }
+.red{
+  background-color: red;
+}
+.orange{
+  background-color: orange;
+}
+.green{
+  background-color: green;
+}
+
+</style>
+
+
+
+
+
+
+    <div class="products-header">
+      <div class="product-cell image">
+        Nom de Produit
+        <button class="sort-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="currentColor" d="M496.1 138.3L375.7 17.9c-7.9-7.9-20.6-7.9-28.5 0L226.9 138.3c-7.9 7.9-7.9 20.6 0 28.5 7.9 7.9 20.6 7.9 28.5 0l85.7-85.7v352.8c0 11.3 9.1 20.4 20.4 20.4 11.3 0 20.4-9.1 20.4-20.4V81.1l85.7 85.7c7.9 7.9 20.6 7.9 28.5 0 7.9-7.8 7.9-20.6 0-28.5zM287.1 347.2c-7.9-7.9-20.6-7.9-28.5 0l-85.7 85.7V80.1c0-11.3-9.1-20.4-20.4-20.4-11.3 0-20.4 9.1-20.4 20.4v352.8l-85.7-85.7c-7.9-7.9-20.6-7.9-28.5 0-7.9 7.9-7.9 20.6 0 28.5l120.4 120.4c7.9 7.9 20.6 7.9 28.5 0l120.4-120.4c7.8-7.9 7.8-20.7-.1-28.5z"/></svg>
+        </button>
+      </div>
+      <div class="product-cell category">Categorie<button class="sort-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="currentColor" d="M496.1 138.3L375.7 17.9c-7.9-7.9-20.6-7.9-28.5 0L226.9 138.3c-7.9 7.9-7.9 20.6 0 28.5 7.9 7.9 20.6 7.9 28.5 0l85.7-85.7v352.8c0 11.3 9.1 20.4 20.4 20.4 11.3 0 20.4-9.1 20.4-20.4V81.1l85.7 85.7c7.9 7.9 20.6 7.9 28.5 0 7.9-7.8 7.9-20.6 0-28.5zM287.1 347.2c-7.9-7.9-20.6-7.9-28.5 0l-85.7 85.7V80.1c0-11.3-9.1-20.4-20.4-20.4-11.3 0-20.4 9.1-20.4 20.4v352.8l-85.7-85.7c-7.9-7.9-20.6-7.9-28.5 0-7.9 7.9-7.9 20.6 0 28.5l120.4 120.4c7.9 7.9 20.6 7.9 28.5 0l120.4-120.4c7.8-7.9 7.8-20.7-.1-28.5z"/></svg>
+        </button></div>
+      <div class="product-cell status-cell">Etat & Quantité<button class="sort-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="currentColor" d="M496.1 138.3L375.7 17.9c-7.9-7.9-20.6-7.9-28.5 0L226.9 138.3c-7.9 7.9-7.9 20.6 0 28.5 7.9 7.9 20.6 7.9 28.5 0l85.7-85.7v352.8c0 11.3 9.1 20.4 20.4 20.4 11.3 0 20.4-9.1 20.4-20.4V81.1l85.7 85.7c7.9 7.9 20.6 7.9 28.5 0 7.9-7.8 7.9-20.6 0-28.5zM287.1 347.2c-7.9-7.9-20.6-7.9-28.5 0l-85.7 85.7V80.1c0-11.3-9.1-20.4-20.4-20.4-11.3 0-20.4 9.1-20.4 20.4v352.8l-85.7-85.7c-7.9-7.9-20.6-7.9-28.5 0-7.9 7.9-7.9 20.6 0 28.5l120.4 120.4c7.9 7.9 20.6 7.9 28.5 0l120.4-120.4c7.8-7.9 7.8-20.7-.1-28.5z"/></svg>
+        </button></div>
+      <div class="product-cell sales">Prix<button class="sort-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="currentColor" d="M496.1 138.3L375.7 17.9c-7.9-7.9-20.6-7.9-28.5 0L226.9 138.3c-7.9 7.9-7.9 20.6 0 28.5 7.9 7.9 20.6 7.9 28.5 0l85.7-85.7v352.8c0 11.3 9.1 20.4 20.4 20.4 11.3 0 20.4-9.1 20.4-20.4V81.1l85.7 85.7c7.9 7.9 20.6 7.9 28.5 0 7.9-7.8 7.9-20.6 0-28.5zM287.1 347.2c-7.9-7.9-20.6-7.9-28.5 0l-85.7 85.7V80.1c0-11.3-9.1-20.4-20.4-20.4-11.3 0-20.4 9.1-20.4 20.4v352.8l-85.7-85.7c-7.9-7.9-20.6-7.9-28.5 0-7.9 7.9-7.9 20.6 0 28.5l120.4 120.4c7.9 7.9 20.6 7.9 28.5 0l120.4-120.4c7.8-7.9 7.8-20.7-.1-28.5z"/></svg>
+        </button></div>
+      <div class="product-cell stock">Description<button class="sort-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 512 512"><path fill="currentColor" d="M496.1 138.3L375.7 17.9c-7.9-7.9-20.6-7.9-28.5 0L226.9 138.3c-7.9 7.9-7.9 20.6 0 28.5 7.9 7.9 20.6 7.9 28.5 0l85.7-85.7v352.8c0 11.3 9.1 20.4 20.4 20.4 11.3 0 20.4-9.1 20.4-20.4V81.1l85.7 85.7c7.9 7.9 20.6 7.9 28.5 0 7.9-7.8 7.9-20.6 0-28.5zM287.1 347.2c-7.9-7.9-20.6-7.9-28.5 0l-85.7 85.7V80.1c0-11.3-9.1-20.4-20.4-20.4-11.3 0-20.4 9.1-20.4 20.4v352.8l-85.7-85.7c-7.9-7.9-20.6-7.9-28.5 0-7.9 7.9-7.9 20.6 0 28.5l120.4 120.4c7.9 7.9 20.6 7.9 28.5 0l120.4-120.4c7.8-7.9 7.8-20.7-.1-28.5z"/></svg>
+        </button></div>
+      <div class="product-cell price">Date Ajout<button class="sort-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="currentColor" d="M496.1 138.3L375.7 17.9c-7.9-7.9-20.6-7.9-28.5 0L226.9 138.3c-7.9 7.9-7.9 20.6 0 28.5 7.9 7.9 20.6 7.9 28.5 0l85.7-85.7v352.8c0 11.3 9.1 20.4 20.4 20.4 11.3 0 20.4-9.1 20.4-20.4V81.1l85.7 85.7c7.9 7.9 20.6 7.9 28.5 0 7.9-7.8 7.9-20.6 0-28.5zM287.1 347.2c-7.9-7.9-20.6-7.9-28.5 0l-85.7 85.7V80.1c0-11.3-9.1-20.4-20.4-20.4-11.3 0-20.4 9.1-20.4 20.4v352.8l-85.7-85.7c-7.9-7.9-20.6-7.9-28.5 0-7.9 7.9-7.9 20.6 0 28.5l120.4 120.4c7.9 7.9 20.6 7.9 28.5 0l120.4-120.4c7.8-7.9 7.8-20.7-.1-28.5z"/></svg>
+        </button></div>
+      <div class="product-cell price">Date expiration<button class="sort-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="currentColor" d="M496.1 138.3L375.7 17.9c-7.9-7.9-20.6-7.9-28.5 0L226.9 138.3c-7.9 7.9-7.9 20.6 0 28.5 7.9 7.9 20.6 7.9 28.5 0l85.7-85.7v352.8c0 11.3 9.1 20.4 20.4 20.4 11.3 0 20.4-9.1 20.4-20.4V81.1l85.7 85.7c7.9 7.9 20.6 7.9 28.5 0 7.9-7.8 7.9-20.6 0-28.5zM287.1 347.2c-7.9-7.9-20.6-7.9-28.5 0l-85.7 85.7V80.1c0-11.3-9.1-20.4-20.4-20.4-11.3 0-20.4 9.1-20.4 20.4v352.8l-85.7-85.7c-7.9-7.9-20.6-7.9-28.5 0-7.9 7.9-7.9 20.6 0 28.5l120.4 120.4c7.9 7.9 20.6 7.9 28.5 0l120.4-120.4c7.8-7.9 7.8-20.7-.1-28.5z"/></svg>
+        </button></div>
+      <div class="product-cell price">Action<button class="sort-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 512 512"><path fill="currentColor" d="M496.1 138.3L375.7 17.9c-7.9-7.9-20.6-7.9-28.5 0L226.9 138.3c-7.9 7.9-7.9 20.6 0 28.5 7.9 7.9 20.6 7.9 28.5 0l85.7-85.7v352.8c0 11.3 9.1 20.4 20.4 20.4 11.3 0 20.4-9.1 20.4-20.4V81.1l85.7 85.7c7.9 7.9 20.6 7.9 28.5 0 7.9-7.8 7.9-20.6 0-28.5zM287.1 347.2c-7.9-7.9-20.6-7.9-28.5 0l-85.7 85.7V80.1c0-11.3-9.1-20.4-20.4-20.4-11.3 0-20.4 9.1-20.4 20.4v352.8l-85.7-85.7c-7.9-7.9-20.6-7.9-28.5 0-7.9 7.9-7.9 20.6 0 28.5l120.4 120.4c7.9 7.9 20.6 7.9 28.5 0l120.4-120.4c7.8-7.9 7.8-20.7-.1-28.5z"/></svg>
+        </button></div>
+    </div>
+ 
+    <div class="products-row">
+      <button class="cell-more-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-more-vertical"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+      </button>
+        <div class="product-cell image">
+          {% if n.image %}
+          <img src="{{ n.image.url }}" alt="product">
+          {% else %}         
+          <img src="vignette-produit.jpg" alt="product">
+          {% endif %}
+          <span>{{n.name}}</span>
+        </div>
+      <div class="product-cell category"><span class="cell-label">Categories:</span>{{n.category}}</div>
+      <div class="product-cell status-cell">
+        <span class="cell-label">Status:</span>
+        <span class="status active"> <button class="button {{n.statut_quantite}}"></button> {{n.quantite}}</span>
+      </div>
+      <div class="product-cell sales"><span class="cell-label">Prix:</span>{{n.price}}</div>
+      <div class="product-cell stock"><span class="cell-label">Description:</span>{{n.description}}</div>
+      <div class="product-cell price"><span class="cell-label">Date Ajout:</span>{{n.date_ajout}}</div>
+      <div class="product-cell price"><span class="cell-label">Date Expiration:</span>{{n.date_expiration}}</div>
+      <div class="product-cell price"><span class="cell-label">
+      Action:</span>
+     
+    
+      <a href="{% url 'supprimer-produit' n.id %}" class="btn btn-danger"><i class="bi bi-trash3-fill"></i></a>
+   
+    
+      
+    
+    
+    </div>
+
+    </div>
+</div>
+{% endblock Produit %}

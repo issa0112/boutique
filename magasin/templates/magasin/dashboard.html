@@ -1,0 +1,192 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace Magasin</title>
+  <link rel="stylesheet" href="{% static 'app.css' %}">
+</head>
+<body>
+  <main class="content" style="padding-top:18px;">
+    <div class="toolbar" style="margin-bottom:12px;">
+      <h2 class="page-title" style="margin:0;">Espace Magasin</h2>
+      <div class="topbar-actions">
+        <a href="{% url 'portal_entry' %}" class="btn btn-outline">Portail</a>
+        <a href="{% url 'logout_page' %}" class="btn btn-outline">Déconnexion</a>
+        <button
+          type="button"
+          id="themeToggle"
+          class="btn btn-outline theme-toggle-btn"
+          aria-pressed="false"
+          aria-label="Activer mode sombre"
+          title="Activer mode sombre"
+        >
+          <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 15.5A8.5 8.5 0 1 1 8.5 4A7 7 0 0 0 20 15.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 2V4M12 20V22M22 12H20M4 12H2M19.07 4.93L17.66 6.34M6.34 17.66L4.93 19.07M19.07 19.07L17.66 17.66M6.34 6.34L4.93 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        {% if request.user.is_superuser %}
+        <a href="{% url 'dashboard' %}" class="btn btn-outline">Entrer Boutique</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="grid grid-2" style="margin-bottom:14px;">
+      <div class="card"><div class="muted">Nouvelles commandes boutique</div><div style="font-size:28px; font-weight:800;">{{ pending_count }}</div></div>
+      <div class="card"><div class="muted">Commandes expédiées en attente validation</div><div style="font-size:28px; font-weight:800;">{{ expediees_count }}</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <form method="GET" class="form-grid">
+        <select name="statut">
+          <option value="">Tous les statuts</option>
+          <option value="envoyee" {% if statut_filter == "envoyee" %}selected{% endif %}>Envoyée</option>
+          <option value="expediee" {% if statut_filter == "expediee" %}selected{% endif %}>Expédiée</option>
+          <option value="validee" {% if statut_filter == "validee" %}selected{% endif %}>Validée</option>
+          <option value="annulee" {% if statut_filter == "annulee" %}selected{% endif %}>Annulée</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+        <a class="btn btn-outline" href="{% url 'magasin_audit_export_csv' %}">Audit CSV</a>
+        <a class="btn btn-outline" href="{% url 'magasin_audit_export_pdf' %}">Audit PDF</a>
+      </form>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <h3 style="margin-top:0;">Niveaux de stock magasin</h3>
+      <form method="POST" class="form-grid" style="margin-bottom:10px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="stock_update">
+        <select name="produit_id" required>
+          <option value="">Produit</option>
+          {% for p in produits %}
+          <option value="{{ p.id }}">{{ p.nom }}</option>
+          {% endfor %}
+        </select>
+        <input type="number" name="quantite" min="0" placeholder="Qté" required>
+        <input type="number" name="stock_min" min="0" placeholder="Stock min" required>
+        <button class="btn btn-primary" type="submit">Créer / mettre à jour</button>
+      </form>
+      <table class="table">
+        <thead><tr><th>Produit</th><th>Qté</th><th>Stock min</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for s in stocks %}
+          <tr>
+            <td>{{ s.produit.nom }}</td>
+            <td>{{ s.quantite }}</td>
+            <td>{{ s.stock_min }}</td>
+            <td>
+              <form method="POST" class="form-grid" style="grid-template-columns:120px 120px 1fr; gap:8px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="stock_update">
+                <input type="hidden" name="produit_id" value="{{ s.produit.id }}">
+                <input type="number" name="quantite" value="{{ s.quantite }}" required>
+                <input type="number" name="stock_min" value="{{ s.stock_min }}" required>
+                <button class="btn btn-outline" type="submit">Mettre à jour</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="muted">Aucun stock magasin.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Date</th>
+            <th>Produit</th>
+            <th>Qté</th>
+            <th>Message boutique</th>
+            <th>Statut</th>
+            <th>Bordereau</th>
+            <th>Bordereau PDF</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in commandes %}
+          <tr>
+            <td>{{ c.numero }}</td>
+            <td>{{ c.created_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ c.produit.nom }}</td>
+            <td>{{ c.quantite }}</td>
+            <td>{{ c.message|default:"-" }}</td>
+            <td>{{ c.get_statut_display }}</td>
+            <td>{% if c.bordereau_numero %}{{ c.bordereau_numero }}{% else %}-{% endif %}</td>
+            <td>
+              {% if c.bordereau_numero %}
+              <a class="btn btn-outline" href="{% url 'magasin_bordereau_pdf' c.id %}" target="_blank">PDF</a>
+              {% else %}
+              -
+              {% endif %}
+            </td>
+            <td>
+              {% if c.statut == "envoyee" %}
+              <form method="POST" action="{% url 'magasin_expedier_commande' c.id %}" enctype="multipart/form-data" style="display:grid; gap:6px; min-width:210px;">
+                {% csrf_token %}
+                <input type="text" name="bordereau_numero" placeholder="N° bordereau (auto si vide)">
+                <input type="file" name="bordereau_image" accept="image/*,.pdf">
+                <button type="submit" class="btn btn-primary">Déclencher sortie</button>
+              </form>
+              {% else %}
+              <span class="muted">Aucune action</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="9" class="muted">Aucune commande.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3 style="margin-top:0;">Journal d'audit</h3>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Commande</th>
+            <th>Action</th>
+            <th>Espace</th>
+            <th>Acteur</th>
+            <th>Détails</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in audits %}
+          <tr>
+            <td>{{ a.created_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ a.commande.numero }}</td>
+            <td>{{ a.get_action_display }}</td>
+            <td>{{ a.get_espace_display }}</td>
+            <td>{% if a.acteur %}{{ a.acteur.username }}{% else %}N/A{% endif %}</td>
+            <td>{{ a.details }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="muted">Aucun audit.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+  <script src="{% static 'app.js' %}"></script>
+</body>
+</html>
+
+

@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+    <meta charset="UTF-8">
+    <title>Ajout des produits</title>
+    <link rel="stylesheet" href="{% static 'style1.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font-awesome.min.css' %}">
+   
+   </head>
+   <body>
+   <div class="container-fluid px-1 py-3 mx-auto"> <!-- Diminution du padding vertical -->
+        <div class="row d-flex justify-content-center">
+            <div class="col-xl-7 col-lg-8 col-md-9 col-11 text-center">
+                <div class="card">
+                  {% if messages %}
+                  <ul class="messages alert alert-success">
+                    {% for message in messages %}
+                      <li {% if message.tags %} class="{{ message.tags }}" style="color: green;" {% endif %}>
+                        {{ message }}
+                      </li>
+                    {% endfor %}
+                  </ul>
+                  {% endif %}
+                  <h2>Confirmer la suppression</h2>
+                  <p>Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.</p>
+
+                  <form method="post">
+                      {% csrf_token %}
+                      <button type="submit" class="button redbtn btn-primary">Supprimer</button>
+                      <a href="{% url 'home' %}" class="button orange">Annuler</a>
+                  </form>
+            
+            </div>
+
+          </div>
+    </div>
+</body>
+</html>

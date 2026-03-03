@@ -1,0 +1,335 @@
+{% extends 'boutique/base.html' %}
+
+{% block page_title %}Comptabilité{% endblock %}
+
+{% block content %}
+<style>
+  .finance-hero {
+    border-radius: 18px;
+    padding: 18px;
+    border: 1px solid #cbd5e1;
+    background: linear-gradient(135deg, #0b3b6e 0%, #0f766e 55%, #22c55e 100%);
+    color: #f8fafc;
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.18);
+  }
+  .finance-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+  }
+  .finance-kpi-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .finance-kpi {
+    border-radius: 14px;
+    padding: 14px;
+    border: 1px solid #dbeafe;
+    background: #ffffff;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+  }
+  .finance-kpi .label { color: #475569; font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; }
+  .finance-kpi .value { font-size: 24px; font-weight: 800; margin-top: 6px; }
+  .finance-kpi.good .value { color: #166534; }
+  .finance-kpi.bad .value { color: #991b1b; }
+  .mode-row { margin-bottom: 10px; }
+  .mode-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .mode-bar { width: 100%; height: 10px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+  .mode-fill { height: 100%; background: linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%); }
+  .ledger-grid { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ledger-span-full { grid-column: 1 / -1; }
+  .table-shell {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: auto;
+    background: #fff;
+  }
+  .table.table-compact th,
+  .table.table-compact td {
+    padding: 9px 10px;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .table.table-compact thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f1f5f9;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid transparent;
+  }
+  .status-pill.ok { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+  .status-pill.warn { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+  .status-pill.pending { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+  @media (max-width: 1100px) {
+    .finance-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ledger-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
+    .finance-kpi-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<h2 class="page-title">Comptabilité</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="finance-hero">
+  <h3 class="finance-title">Pilotage financier</h3>
+  <div style="margin-top:8px;">Période du {{ date_from|date:"d/m/Y" }} au {{ date_to|date:"d/m/Y" }} • Encaissement: {{ taux_encaissement|floatformat:2 }}%</div>
+</div>
+
+<div class="card" style="margin-top:14px;">
+  <form method="GET" class="form-grid">
+    <select name="period">
+      <option value="week" {% if period == "week" %}selected{% endif %}>Cette semaine</option>
+      <option value="month" {% if period == "month" %}selected{% endif %}>Ce mois</option>
+      <option value="year" {% if period == "year" %}selected{% endif %}>Cette année</option>
+      <option value="custom" {% if period == "custom" %}selected{% endif %}>Personnalisé</option>
+    </select>
+    <input type="date" name="date_from" value="{{ date_from }}">
+    <input type="date" name="date_to" value="{{ date_to }}">
+    <button type="submit" class="btn btn-primary">Analyser</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top:14px;">
+  <div class="section-title">Nouvelle dépense</div>
+  <form method="POST" class="form-grid">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="depense">
+    <input type="hidden" name="period" value="{{ period }}">
+    <input type="hidden" name="date_from" value="{{ date_from }}">
+    <input type="hidden" name="date_to" value="{{ date_to }}">
+    <select name="type_depense" required>
+      <option value="">Type de dépense</option>
+      <option value="investissement">Dépense d'investissement</option>
+      <option value="morte">Dépense morte</option>
+    </select>
+    <input type="text" name="nature" placeholder="Nature de la dépense" required>
+    <input type="number" name="montant" min="0.01" step="0.01" placeholder="Montant" required>
+    <input type="date" name="date_depense" value="{{ date_to }}">
+    <input type="text" name="note" placeholder="Note (optionnel)">
+    <button type="submit" class="btn btn-primary">Enregistrer dépense</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top:14px;">
+  <div class="section-title">Rançon journalière</div>
+  <form method="POST" class="form-grid">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="ranson_journalier">
+    <input type="hidden" name="period" value="{{ period }}">
+    <input type="hidden" name="date_from" value="{{ date_from }}">
+    <input type="hidden" name="date_to" value="{{ date_to }}">
+    <input type="date" name="date_jour" value="{{ date_to }}" required>
+    <input type="number" name="montant_ranson" min="0" step="0.01" placeholder="Montant par employé présent" required>
+    <input type="text" name="note_ranson" placeholder="Note contrôle (optionnel)">
+    <select name="present_ids" multiple style="min-height:150px;">
+      {% for p in personnels_actifs %}
+      <option value="{{ p.id }}">{{ p.prenom }} {{ p.nom }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">Contrôler et payer les présents</button>
+  </form>
+  <div class="muted" style="margin-top:8px;">
+    Sélectionne les employés présents (Ctrl/Cmd + clic). Les présents sont payés automatiquement, les absents enregistrés à 0.
+  </div>
+</div>
+
+<div class="finance-kpi-grid" style="margin-top:14px;">
+  <div class="finance-kpi">
+    <div class="label">CA facturé</div>
+    <div class="value">{{ ca_total|floatformat:2 }} FCFA</div>
+  </div>
+  <div class="finance-kpi good">
+    <div class="label">Encaissements</div>
+    <div class="value">{{ encaisse_total|floatformat:2 }} FCFA</div>
+  </div>
+  <div class="finance-kpi bad">
+    <div class="label">Impayés</div>
+    <div class="value">{{ impaye_total|floatformat:2 }} FCFA</div>
+  </div>
+  <div class="finance-kpi {% if resultat_net >= 0 %}good{% else %}bad{% endif %}">
+    <div class="label">Résultat net</div>
+    <div class="value">{{ resultat_net|floatformat:2 }} FCFA</div>
+  </div>
+</div>
+
+<div class="grid grid-2" style="margin-top:14px;">
+  <div class="card">
+    <div class="section-title">Synthèse charges</div>
+    <div class="summary-box">
+      <div class="summary-row"><span>Salaires</span><strong>{{ salaires_total|floatformat:2 }} FCFA</strong></div>
+      <div class="summary-row"><span>Achats fournisseurs</span><strong>{{ achats_total|floatformat:2 }} FCFA</strong></div>
+      <div class="summary-row"><span>Commissions</span><strong>{{ commissions_total|floatformat:2 }} FCFA</strong></div>
+      <div class="summary-row"><span>Dépenses investissement</span><strong>{{ depenses_investissement|floatformat:2 }} FCFA</strong></div>
+      <div class="summary-row"><span>Dépenses mortes</span><strong>{{ depenses_mortes|floatformat:2 }} FCFA</strong></div>
+      <div class="summary-row"><span>Total dépenses diverses</span><strong>{{ depenses_total|floatformat:2 }} FCFA</strong></div>
+      <div class="summary-row"><span>Rançons journalières payées</span><strong>{{ ransons_total|floatformat:2 }} FCFA</strong></div>
+      <div class="summary-row"><span>Remises accordées</span><strong>{{ remises_total|floatformat:2 }} FCFA</strong></div>
+      <div class="summary-row total"><span>Total charges</span><strong>{{ charges_total|floatformat:2 }} FCFA</strong></div>
+      <div class="summary-row"><span>Présences contrôlées</span><strong>{{ ransons_presents }} présent(s) / {{ ransons_absents }} absent(s)</strong></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">Répartition des paiements</div>
+    {% for item in stats_paiement %}
+      <div class="mode-row">
+        <div class="mode-head">
+          <strong>{{ item.label }}</strong>
+          <span class="muted">{{ item.total|floatformat:2 }} FCFA ({{ item.count }})</span>
+        </div>
+        <div class="mode-bar"><div class="mode-fill" style="width:{{ item.ratio|floatformat:2 }}%;"></div></div>
+      </div>
+    {% empty %}
+      <div class="muted">Aucune donnée de paiement sur la période.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px;">
+  <div class="toolbar">
+    <div>
+      <div class="section-title" style="margin:0;">Flux journalier</div>
+      <div class="muted">Facturé, encaissé et impayé par jour</div>
+    </div>
+    <span class="chip">{{ factures_count }} facture(s) • {{ impayes_count }} impayée(s)</span>
+  </div>
+  <table class="table" style="margin-top:10px;">
+    <thead>
+      <tr>
+        <th>Jour</th>
+        <th>Facturé</th>
+        <th>Encaissé</th>
+        <th>Impayé</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in flux_journalier %}
+      <tr>
+        <td>{{ row.jour|date:"d/m/Y" }}</td>
+        <td>{{ row.facture|default:0|floatformat:2 }} FCFA</td>
+        <td>{{ row.encaisse|default:0|floatformat:2 }} FCFA</td>
+        <td>{{ row.impaye|default:0|floatformat:2 }} FCFA</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="muted">Aucun flux sur la période.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="ledger-grid" style="margin-top:14px;">
+  <div class="card">
+    <div class="section-title">Journal ventes</div>
+    <table class="table">
+      <thead><tr><th>Date</th><th>Réf</th><th>Montant</th><th>Statut</th></tr></thead>
+      <tbody>
+        {% for v in recent_ventes %}
+        <tr>
+          <td>{{ v.date_vente|date:"d/m H:i" }}</td>
+          <td>#{{ v.id }}</td>
+          <td>{{ v.total|floatformat:2 }}</td>
+          <td>{% if v.statut_paiement == "paye" %}<span class="badge ok">Payé</span>{% else %}<span class="badge warning">Impayé</span>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="muted">Aucune vente.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Journal salaires</div>
+    <table class="table">
+      <thead><tr><th>Date</th><th>Personnel</th><th>Total</th></tr></thead>
+      <tbody>
+        {% for p in recent_paies %}
+        <tr>
+          <td>{{ p.created_at|date:"d/m/Y" }}</td>
+          <td>{{ p.personnel }}</td>
+          <td>{{ p.total|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="muted">Aucune paie.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Journal achats</div>
+    <table class="table">
+      <thead><tr><th>Date</th><th>Réf</th><th>Total</th><th>Statut</th></tr></thead>
+      <tbody>
+        {% for a in recent_achats %}
+        <tr>
+          <td>{{ a.date_commande|date:"d/m/Y" }}</td>
+          <td>BC #{{ a.id }}</td>
+          <td>{{ a.total|floatformat:2 }}</td>
+          <td>{{ a.get_statut_display }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="muted">Aucun achat.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Journal dépenses</div>
+    <table class="table">
+      <thead><tr><th>Date</th><th>Type</th><th>Nature</th><th>Montant</th></tr></thead>
+      <tbody>
+        {% for d in recent_depenses %}
+        <tr>
+          <td>{{ d.date_depense|date:"d/m/Y" }}</td>
+          <td>{{ d.get_type_depense_display }}</td>
+          <td>{{ d.nature }}</td>
+          <td>{{ d.montant|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="muted">Aucune dépense.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card ledger-span-full">
+    <div class="section-title">Journal rançons journalières</div>
+    <div class="table-shell">
+      <table class="table table-compact">
+        <thead><tr><th>Jour</th><th>Employé</th><th>Présence</th><th>Montant</th><th>Paiement</th><th>Contrôlé par</th></tr></thead>
+        <tbody>
+          {% for r in recent_ransons %}
+          <tr>
+            <td>{{ r.date_jour|date:"d/m/Y" }}</td>
+            <td><strong>{{ r.personnel.prenom }} {{ r.personnel.nom }}</strong></td>
+            <td>{% if r.present %}<span class="status-pill ok">Présent</span>{% else %}<span class="status-pill warn">Absent</span>{% endif %}</td>
+            <td>{{ r.montant|floatformat:2 }} FCFA</td>
+            <td>{% if r.est_paye %}<span class="status-pill ok">Payé</span>{% else %}<span class="status-pill pending">Non payé</span>{% endif %}</td>
+            <td>{% if r.controle_par %}{{ r.controle_par.username }}{% else %}<span class="muted">N/A</span>{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="muted">Aucune rançon journalière.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,451 @@
+﻿{% extends 'boutique/base.html' %}
+
+{% block page_title %}Produits{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Produits</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="card">
+  <h3 class="section-heading">Ajouter un produit</h3>
+  <form id="produitForm" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-grid">
+      <input type="text" name="nom" placeholder="Nom produit" required>
+      <input type="number" name="prix" placeholder="Prix" step="0.01" required>
+      <input type="number" name="quantite" placeholder="Quantité" min="0" required>
+      <input type="number" name="stock_min" placeholder="Stock min" min="0">
+
+      <div>
+        <select name="fournisseur">
+          <option value="">Fournisseur</option>
+          {% for f in fournisseurs %}
+          <option value="{{ f.id }}">{{ f.nom }}</option>
+          {% endfor %}
+        </select>
+        <button type="button" id="btnFournisseur" class="btn btn-outline mt-8">Ajouter fournisseur</button>
+      </div>
+
+      <div>
+        <select name="categorie">
+          <option value="">Catégorie</option>
+          {% for c in categories %}
+          <option value="{{ c.id }}">{{ c.nom }}</option>
+          {% endfor %}
+        </select>
+        <button type="button" id="btnCategorie" class="btn btn-outline mt-8">Ajouter catégorie</button>
+      </div>
+
+      <input type="file" name="image" accept="image/*">
+      <button type="submit" class="btn btn-primary">Ajouter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card mt-16">
+  <div class="toolbar product-toolbar mb-12">
+    <div class="toolbar-group product-toolbar-search">
+      <input type="text" id="searchInput" class="search-input product-search-input" placeholder="Rechercher...">
+    </div>
+    <div class="toolbar-group product-toolbar-controls">
+      <button type="button" id="btnListe" class="btn btn-outline">Liste</button>
+      <button type="button" id="btnGrille" class="btn btn-outline">Grille</button>
+      <select id="filterCategorie" class="filter-select">
+        <option value="">-- Catégorie --</option>
+        {% for c in categories %}
+        <option value="{{ c.nom }}">{{ c.nom }}</option>
+        {% endfor %}
+      </select>
+      <select id="filterFournisseur" class="filter-select">
+        <option value="">-- Fournisseur --</option>
+        {% for f in fournisseurs %}
+        <option value="{{ f.nom }}">{{ f.nom }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div id="produitsListe">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nom</th>
+          <th>Prix</th>
+          <th>Quantité</th>
+          <th>Stock min</th>
+          <th>Fournisseur</th>
+          <th>Catégorie</th>
+          <th>Image</th>
+          <th>QR Code</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in produits %}
+        <tr data-id="{{ p.id }}" data-nom="{{ p.nom|lower }}" data-categorie="{% if p.category %}{{ p.category.nom|lower }}{% else %}{% endif %}" data-fournisseur="{% if p.fournisseur %}{{ p.fournisseur.nom|lower }}{% else %}{% endif %}">
+          <td>{{ p.id }}</td>
+          <td class="editable" data-field="nom">{{ p.nom }}</td>
+          <td class="editable" data-field="prix">{{ p.prix|floatformat:2 }}</td>
+          <td class="editable" data-field="quantite">{{ p.quantite }}</td>
+          <td class="editable" data-field="stock_min">{{ p.stock_min }}</td>
+          <td class="editable-select" data-field="fournisseur">{% if p.fournisseur %}{{ p.fournisseur.nom }}{% else %}N/A{% endif %}</td>
+          <td class="editable-select" data-field="categorie">{% if p.category %}{{ p.category.nom }}{% else %}N/A{% endif %}</td>
+          <td class="editable-image">
+            {% if p.image %}
+              <img src="{{ p.image.url }}" alt="Image" class="product-image-sm">
+            {% else %}
+              <span class="muted">Aucune image</span>
+            {% endif %}
+          </td>
+          <td class="qr-code">
+            {% if p.qr_code %}
+              <img src="{{ p.qr_code.url }}" class="qr-thumb">
+            {% else %}N/A{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div id="produitsGrille" class="grid sales-products-grid mt-14" style="display:none;">
+    {% for p in produits %}
+    <div data-id="{{ p.id }}" data-nom="{{ p.nom|lower }}" data-categorie="{% if p.category %}{{ p.category.nom|lower }}{% else %}{% endif %}" data-fournisseur="{% if p.fournisseur %}{{ p.fournisseur.nom|lower }}{% else %}{% endif %}" class="product-grid-card product-grid-card-produit">
+      <div class="product-grid-media">
+        <span class="product-stock-badge {% if p.quantite|default:0 <= p.stock_min|default:0 %}is-low{% else %}is-normal{% endif %}">
+          {% if p.quantite|default:0 <= p.stock_min|default:0 %}Stock faible{% else %}Stock normal{% endif %}
+        </span>
+        <div class="editable-image">
+        {% if p.image %}
+          <img src="{{ p.image.url }}" alt="Image" class="product-grid-thumb">
+        {% else %}
+          <div class="product-grid-thumb product-grid-thumb-empty"></div>
+        {% endif %}
+        </div>
+      </div>
+      <div class="product-grid-body">
+        <div class="editable product-grid-name" data-field="nom">{{ p.nom }}</div>
+        <div class="editable product-grid-price" data-field="prix">Prix : {{ p.prix|floatformat:2 }}</div>
+        <div class="editable product-grid-stock" data-field="quantite">Stock : {{ p.quantite }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div id="popupFournisseur" class="modal" style="display:none;">
+  <div class="card modal-card">
+    <h3>Ajouter Fournisseur</h3>
+    <form id="formFournisseur">
+      {% csrf_token %}
+      <input type="text" name="nom" placeholder="Nom Fournisseur" required>
+      <input type="text" name="contact" placeholder="Téléphone" required class="mt-8">
+      <input type="email" name="email" placeholder="Email" required class="mt-8">
+      <div class="form-actions mt-12">
+        <button type="submit" class="btn btn-primary">Ajouter</button>
+        <button type="button" id="closeFournisseur" class="btn btn-outline">Fermer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="popupCategorie" class="modal" style="display:none;">
+  <div class="card modal-card">
+    <h3>Ajouter Catégorie</h3>
+    <form id="formCategorie">
+      {% csrf_token %}
+      <input type="text" name="nom" placeholder="Nom Catégorie" required>
+      <div class="form-actions mt-12">
+        <button type="submit" class="btn btn-primary">Ajouter</button>
+        <button type="button" id="closeCategorie" class="btn btn-outline">Fermer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+<script>
+  const updateProduitBaseUrl = "{% url 'update_produit' 0 %}";
+
+  document.addEventListener("DOMContentLoaded", function() {
+    const messages = document.querySelectorAll('.alert');
+    if (messages.length) {
+      setTimeout(() => messages.forEach(m => m.remove()), 5000);
+    }
+
+    const form = document.getElementById('produitForm');
+    form.addEventListener('submit', function() {
+      setTimeout(() => form.reset(), 100);
+    });
+  });
+
+  function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
+
+  document.querySelectorAll("td.editable, .grid .editable").forEach(cell => {
+    cell.addEventListener("click", function() {
+      if (this.querySelector("input")) return;
+      const value = this.innerText.trim().replace(/^(Prix : |Qté : |Stock : |Stock min : )/i, "");
+      const field = this.dataset.field;
+      const input = document.createElement("input");
+      input.value = value.replace(/\s/g, "").replace(",", ".");
+      input.style.width = "100%";
+      input.dataset.field = field;
+      this.innerHTML = "";
+      this.appendChild(input);
+      input.focus();
+      input.addEventListener("blur", () => saveChange(this.closest("[data-id]").dataset.id, field, input.value, this));
+      input.addEventListener("keydown", e => { if (e.key === "Enter") input.blur(); });
+    });
+  });
+
+  document.querySelectorAll("td.editable-select, .grid .editable-select").forEach(cell => {
+    cell.addEventListener("click", function() {
+      if (this.querySelector("select")) return;
+      const field = this.dataset.field;
+      const select = document.createElement("select");
+      select.style.width = "100%";
+      select.dataset.field = field;
+
+      let options = [];
+      if (field === "fournisseur") {
+        options = [
+          {% for f in fournisseurs %}
+          {id: {{ f.id }}, name: "{{ f.nom }}"},
+          {% endfor %}
+        ];
+      } else if (field === "categorie") {
+        options = [
+          {% for c in categories %}
+          {id: {{ c.id }}, name: "{{ c.nom }}"},
+          {% endfor %}
+        ];
+      }
+
+      options.forEach(opt => {
+        const option = document.createElement("option");
+        option.value = opt.id;
+        option.textContent = opt.name;
+        const currentText = cell.innerText.trim().replace(/^(Catégorie : |Fournisseur : )/i, "");
+        if (currentText === opt.name) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+
+      this.innerHTML = "";
+      this.appendChild(select);
+      select.focus();
+
+      select.addEventListener("blur", () => saveChange(this.closest("[data-id]").dataset.id, field, select.value, this, options));
+    });
+  });
+
+  function saveChange(productId, field, value, cell, options=null) {
+    fetch(updateProduitBaseUrl.replace("/0/", `/${productId}/`), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      body: JSON.stringify({ field: field, value: value })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        const row = document.querySelector(`#produitsListe tr[data-id="${productId}"]`);
+        const card = document.querySelector(`#produitsGrille > div[data-id="${productId}"]`);
+        if (field === "prix") {
+          let num = parseFloat(value);
+          const formatted = !isNaN(num) ? num.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value;
+          cell.innerText = cell.tagName === "TD" ? formatted : `Prix : ${formatted}`;
+        } else if (field === "fournisseur" || field === "categorie") {
+          const opt = options.find(o => o.id == value);
+          const label = field === "categorie" ? "Catégorie : " : "Fournisseur : ";
+          const text = opt ? opt.name : "N/A";
+          cell.innerText = cell.tagName === "TD" ? text : `${label}${text}`;
+          if (row) row.dataset[field] = opt ? opt.name.toLowerCase() : "";
+          if (card) card.dataset[field] = opt ? opt.name.toLowerCase() : "";
+        } else if (field === "quantite") {
+          cell.innerText = cell.tagName === "TD" ? value : `Stock : ${value}`;
+        } else if (field === "stock_min") {
+          cell.innerText = cell.tagName === "TD" ? value : `Stock min : ${value}`;
+        } else {
+          cell.innerText = value;
+          if (field === "nom") {
+            if (row) row.dataset.nom = value.toLowerCase();
+            if (card) card.dataset.nom = value.toLowerCase();
+          }
+        }
+
+        if (data.qr_code_url) {
+          const qrCell = cell.closest("tr")?.querySelector(".qr-code img");
+          if (qrCell) qrCell.src = data.qr_code_url + "?t=" + new Date().getTime();
+        }
+      } else {
+        alert("Erreur: " + data.error);
+      }
+    })
+    .catch(err => console.error(err));
+  }
+
+  document.querySelectorAll("td.editable-image, .grid .editable-image").forEach(cell => {
+    cell.addEventListener("click", function() {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.style.display = "none";
+
+      input.addEventListener("change", function() {
+        const formData = new FormData();
+        formData.append("image", this.files[0]);
+
+        const productId = cell.closest("[data-id]").dataset.id;
+        fetch(updateProduitBaseUrl.replace("/0/", `/${productId}/`), {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-CSRFToken": getCsrfToken()
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const img = cell.querySelector("img");
+            if (img) {
+              img.src = data.image_url + "?t=" + new Date().getTime();
+            }
+
+            if (data.qr_code_url) {
+              const qrCell = cell.closest("tr")?.querySelector(".qr-code img");
+              if (qrCell) qrCell.src = data.qr_code_url + "?t=" + new Date().getTime();
+            }
+          } else {
+            alert("Erreur: " + data.error);
+          }
+        })
+        .catch(err => console.error(err));
+      });
+
+      input.click();
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded", function() {
+    document.getElementById("btnFournisseur").addEventListener("click", function() {
+      document.getElementById("popupFournisseur").style.display = "flex";
+    });
+    document.getElementById("closeFournisseur").addEventListener("click", function() {
+      document.getElementById("popupFournisseur").style.display = "none";
+    });
+
+    document.getElementById("btnCategorie").addEventListener("click", function() {
+      document.getElementById("popupCategorie").style.display = "flex";
+    });
+    document.getElementById("closeCategorie").addEventListener("click", function() {
+      document.getElementById("popupCategorie").style.display = "none";
+    });
+
+    document.getElementById("formFournisseur").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const nom = this.nom.value.trim();
+      const contact = this.contact.value.trim();
+      const email = this.email.value.trim();
+      if(!nom || !contact || !email) return;
+
+      fetch("{% url 'ajouter_fournisseur' %}", {
+        method:"POST",
+        headers: { "X-CSRFToken": getCsrfToken(), "Content-Type":"application/json" },
+        body: JSON.stringify({ nom: nom, contact: contact, email: email })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data.success) {
+          alert("Fournisseur ajouté !");
+          location.reload();
+        } else alert(data.error);
+      });
+    });
+
+    document.getElementById("formCategorie").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const nom = this.nom.value.trim();
+      if(!nom) return;
+      fetch("{% url 'ajouter_categorie' %}", {
+        method:"POST",
+        headers: { "X-CSRFToken": getCsrfToken(), "Content-Type":"application/json" },
+        body: JSON.stringify({ nom: nom })
+      }).then(res=>res.json()).then(data=>{
+        if(data.success) {
+          alert("Catégorie ajoutée !");
+          location.reload();
+        } else alert(data.error);
+      });
+    });
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const filterCategorie = document.getElementById("filterCategorie");
+    const filterFournisseur = document.getElementById("filterFournisseur");
+
+    function filterProducts() {
+      const searchText = searchInput.value.toLowerCase();
+      const selectedCategorie = filterCategorie.value.toLowerCase();
+      const selectedFournisseur = filterFournisseur.value.toLowerCase();
+
+      document.querySelectorAll("#produitsListe tbody tr").forEach(row => {
+        const nom = row.dataset.nom || "";
+        const categorie = row.dataset.categorie || "";
+        const fournisseur = row.dataset.fournisseur || "";
+
+        const show = nom.includes(searchText) &&
+                     (!selectedCategorie || categorie === selectedCategorie) &&
+                     (!selectedFournisseur || fournisseur === selectedFournisseur);
+        row.style.display = show ? "" : "none";
+      });
+
+      document.querySelectorAll("#produitsGrille > div").forEach(card => {
+        const nom = card.dataset.nom || "";
+        const categorie = card.dataset.categorie || "";
+        const fournisseur = card.dataset.fournisseur || "";
+
+        const show = nom.includes(searchText) &&
+                     (!selectedCategorie || categorie === selectedCategorie) &&
+                     (!selectedFournisseur || fournisseur === selectedFournisseur);
+        card.style.display = show ? "block" : "none";
+      });
+    }
+
+    searchInput.addEventListener("input", filterProducts);
+    filterCategorie.addEventListener("change", filterProducts);
+    filterFournisseur.addEventListener("change", filterProducts);
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const btnListe = document.getElementById("btnListe");
+    const btnGrille = document.getElementById("btnGrille");
+    const produitsListe = document.getElementById("produitsListe");
+    const produitsGrille = document.getElementById("produitsGrille");
+
+    btnListe.addEventListener("click", function () {
+      produitsListe.style.display = "block";
+      produitsGrille.style.display = "none";
+    });
+
+    btnGrille.addEventListener("click", function () {
+      produitsListe.style.display = "none";
+      produitsGrille.style.display = "grid";
+    });
+  });
+</script>
+
+{% endblock %}

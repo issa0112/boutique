@@ -1,0 +1,124 @@
+﻿{% extends 'boutique/base.html' %}
+
+{% block page_title %}Factures{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Gestion des factures</h2>
+
+<div class="card" style="margin-bottom:16px;">
+  <form method="GET">
+    <div class="form-grid">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher: N facture ou client">
+
+      <select name="client">
+        <option value="">-- Tous les clients --</option>
+        {% for c in clients %}
+          <option value="{{ c.id }}" {% if client_id == c.id|stringformat:'s' %}selected{% endif %}>{{ c.nom }}</option>
+        {% endfor %}
+      </select>
+
+      <input type="date" name="date_from" value="{{ date_from }}">
+      <input type="date" name="date_to" value="{{ date_to }}">
+      <input type="number" name="min_total" value="{{ min_total }}" min="0" step="0.01" placeholder="Montant min">
+      <input type="number" name="max_total" value="{{ max_total }}" min="0" step="0.01" placeholder="Montant max">
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn btn-primary" type="submit">Filtrer</button>
+      <a class="btn btn-outline" href="{% url 'factures' %}">Reinitialiser</a>
+      <span class="chip">{{ resultats_count }} resultat(s)</span>
+    </div>
+  </form>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:16px;">
+  <div class="card">
+    <div class="muted">Total facture</div>
+    <div style="font-size:24px; font-weight:700; margin-top:6px;">{{ total_factures }} FCFA</div>
+  </div>
+  <div class="card">
+    <div class="muted">Commissions internes</div>
+    <div style="font-size:24px; font-weight:700; margin-top:6px;">{{ total_commissions }} FCFA</div>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Date</th>
+        <th>Client</th>
+        <th>Statut</th>
+        <th>Paiement</th>
+        <th>Total</th>
+        <th>Commission</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for vente in ventes %}
+      <tr>
+        <td>{{ vente.id }}</td>
+        <td>{{ vente.date_vente|date:"d/m/Y H:i" }}</td>
+        <td>{% if vente.client %}{{ vente.client.nom }}{% else %}N/A{% endif %}</td>
+        <td>
+          {% if vente.statut_paiement == "impaye" %}
+            <span class="chip" style="background:#fee2e2; color:#991b1b;">Impayé</span>
+          {% else %}
+            <span class="chip" style="background:#dcfce7; color:#166534;">Payé</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if vente.mode_paiement %}
+            {{ vente.get_mode_paiement_display }}
+            {% if vente.mode_paiement == "transaction_bancaire" and vente.paiement_info_cle %}
+              <div class="muted">{{ vente.paiement_info_cle }}</div>
+            {% endif %}
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+        <td>{{ vente.total }} FCFA</td>
+        <td>{{ vente.commission }} FCFA</td>
+        <td>
+          <a class="btn btn-outline" href="{% url 'facture_pdf' vente.id %}">Facture PDF</a>
+          <a class="btn btn-outline" href="{% url 'ticket_caisse_pdf' vente.id %}">Ticket</a>
+          {% if vente.statut_paiement == "impaye" %}
+            <form method="POST" action="{% url 'facture_marquer_payee' vente.id %}" style="margin-top:8px; display:grid; gap:6px; max-width:280px;">
+              {% csrf_token %}
+              <select name="paiement" class="encaisse-mode" data-target="{{ vente.id }}" required>
+                <option value="">Mode de paiement (encaissement)</option>
+                <option value="livraison">Paiement à la livraison</option>
+                <option value="cash">Paiement en cash</option>
+                <option value="cheque">Paiement par chèque</option>
+                <option value="mobile">Orange Money</option>
+                <option value="transaction_bancaire">Transaction bancaire</option>
+                <option value="remise">Remise vendeur</option>
+              </select>
+              <input type="text" name="paiement_info_cle" id="encaisse-info-{{ vente.id }}" placeholder="Information clé (bancaire)" style="display:none;">
+              <button class="btn btn-primary" type="submit">Marquer payée</button>
+            </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="muted">Aucune facture</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script>
+document.querySelectorAll(".encaisse-mode").forEach((selectEl) => {
+  selectEl.addEventListener("change", () => {
+    const targetId = selectEl.dataset.target;
+    const infoInput = document.getElementById(`encaisse-info-${targetId}`);
+    if (!infoInput) return;
+    const isBank = selectEl.value === "transaction_bancaire";
+    infoInput.style.display = isBank ? "block" : "none";
+    infoInput.required = isBank;
+    if (!isBank) infoInput.value = "";
+  });
+});
+</script>
+{% endblock %}

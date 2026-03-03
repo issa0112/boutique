@@ -1,0 +1,71 @@
+﻿{% extends 'boutique/base.html' %}
+
+{% block page_title %}Personnel{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Personnel</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="toolbar" style="margin-bottom:12px;">
+  <div class="muted">Exports</div>
+  <div style="display:flex; gap:8px;">
+    <a class="btn btn-outline" href="{% url 'personnel_export_csv' %}">Exporter CSV</a>
+    <a class="btn btn-outline" href="{% url 'personnel_export_pdf' %}">Exporter PDF</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Ajouter un employé</h3>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-grid">
+      <input type="text" name="nom" placeholder="Nom" required>
+      <input type="text" name="prenom" placeholder="Prénom">
+      <input type="text" name="telephone" placeholder="Téléphone" required>
+      <input type="email" name="email" placeholder="Email">
+      <input type="text" name="poste" placeholder="Poste" required>
+      <input type="date" name="date_embauche">
+      <input type="number" name="salaire_base" placeholder="Salaire de base" step="0.01">
+      <select name="statut">
+        <option value="actif">Actif</option>
+        <option value="inactif">Inactif</option>
+      </select>
+      <button type="submit" class="btn btn-primary">Ajouter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Poste</th>
+        <th>Téléphone</th>
+        <th>Email</th>
+        <th>Salaire de base</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in personnels %}
+      <tr>
+        <td>{{ p.prenom }} {{ p.nom }}</td>
+        <td>{{ p.poste }}</td>
+        <td>{{ p.telephone }}</td>
+        <td>{{ p.email }}</td>
+        <td>{{ p.salaire_base }} FCFA</td>
+        <td>{{ p.statut }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="muted">Aucun employé</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

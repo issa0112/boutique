@@ -1,0 +1,300 @@
+﻿{% extends 'boutique/base.html' %}
+{% load static %}
+
+{% block page_title %}Factures proforma{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Nouvelle facture proforma</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="sales-grid">
+  <div class="card">
+    <div class="toolbar" style="margin-bottom:12px;">
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input id="searchProduit" placeholder="Rechercher un produit..." style="max-width:220px;">
+      </div>
+      <div class="toggle-buttons">
+        <button type="button" class="btn btn-outline" id="btnListe">Liste</button>
+        <button type="button" class="btn btn-outline" id="btnGrille">Grille</button>
+      </div>
+    </div>
+
+    <div id="produitsListe" style="display:block;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Prix</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in produits %}
+          <tr onclick="ajouterAuPanier('{{ p.id }}')" style="cursor:pointer;">
+            <td>
+              <div class="product-card" style="border:none; box-shadow:none; padding:0;">
+                {% if p.image %}
+                  <img class="product-thumb" src="{{ p.image.url }}" alt="{{ p.nom }}">
+                {% else %}
+                  <div class="product-thumb"></div>
+                {% endif %}
+                <div class="product-meta">
+                  <div class="name">{{ p.nom }}</div>
+                  <div class="sub">ID #{{ p.id }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ p.prix }} FCFA</td>
+            <td>{{ p.quantite }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div id="produitsGrid" style="display:none;" class="grid sales-products-grid">
+      {% for p in produits %}
+      <div onclick="ajouterAuPanier('{{ p.id }}')" class="product-grid-card">
+        <div class="product-grid-media">
+          <span class="product-stock-badge {% if p.quantite|default:0 <= p.stock_min|default:0 %}is-low{% else %}is-normal{% endif %}">
+            {% if p.quantite|default:0 <= p.stock_min|default:0 %}Stock faible{% else %}Stock normal{% endif %}
+          </span>
+          {% if p.image %}
+            <img class="product-grid-thumb" src="{{ p.image.url }}" alt="{{ p.nom }}">
+          {% else %}
+            <div class="product-grid-thumb product-grid-thumb-empty"></div>
+          {% endif %}
+        </div>
+        <div class="product-grid-body">
+          <div class="product-grid-name">{{ p.nom }}</div>
+          <div class="product-grid-price">{{ p.prix }} FCFA</div>
+          <div class="product-grid-stock">Stock: {{ p.quantite }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="POST" id="proformaForm">
+      {% csrf_token %}
+
+      <div class="section-title">Client</div>
+      <select name="client" style="margin-bottom:12px;">
+        <option value="">-- Selectionner un client --</option>
+        {% for c in clients %}<option value="{{ c.id }}">{{ c.nom }}</option>{% endfor %}
+      </select>
+
+      <div class="section-title">Panier proforma</div>
+      <div id="panierContent">{% include "boutique/panier_content.html" with panier=panier total_general=total_general subtotal=subtotal remises_lignes=remises_lignes marge_totale=marge_totale %}</div>
+
+      <div class="section-title" style="margin-top:12px;">Remise globale</div>
+      <div class="payment-group">
+        <div class="form-grid">
+          <select id="discountType">
+            <option value="">Aucune remise</option>
+            <option value="percent">Remise %</option>
+            <option value="amount">Remise fixe</option>
+          </select>
+          <input type="number" id="discountValue" placeholder="Valeur" min="0" step="0.01">
+        </div>
+        <input type="hidden" name="discount_type" id="discountTypeInput">
+        <input type="hidden" name="discount_value" id="discountValueInput">
+      </div>
+
+      <div class="section-title" style="margin-top:12px;">Bon d'achat</div>
+      <div class="payment-group">
+        <input type="text" name="coupon_code" id="couponCode" placeholder="Code bon d'achat">
+      </div>
+
+      <div class="section-title" style="margin-top:12px;">Commission interne</div>
+      <div class="payment-group">
+        <input type="number" name="commission" id="commission" placeholder="Montant commissionnaire" min="0" step="0.01" value="0">
+        <div class="muted">Interne uniquement, n'apparait pas sur la facture client.</div>
+      </div>
+
+      <div class="section-title" style="margin-top:12px;">Parametres proforma</div>
+      <div class="payment-group">
+        <select name="statut">
+          <option value="brouillon">Brouillon</option>
+          <option value="envoyee">Envoyee</option>
+          <option value="acceptee">Acceptee</option>
+          <option value="expiree">Expiree</option>
+        </select>
+        <input type="date" name="date_expiration">
+        <input type="text" name="note" placeholder="Note (optionnel)">
+      </div>
+
+      <div class="sticky-actions" style="margin-top:14px;">
+        <button type="submit" class="btn btn-primary" style="width:100%;">Enregistrer la proforma</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <div class="summary-row total">
+    <span>Total proformas</span>
+    <span>{{ total_proformas }} FCFA</span>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <h2 class="page-title" style="font-size:20px; margin:0 0 12px;">Proformas enregistrees</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>No</th>
+        <th>Date</th>
+        <th>Client</th>
+        <th>Total</th>
+        <th>Statut</th>
+        <th>Facture</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in proformas %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.date_creation|date:"d/m/Y H:i" }}</td>
+        <td>{% if p.client %}{{ p.client.nom }}{% else %}N/A{% endif %}</td>
+        <td>{{ p.total }}</td>
+        <td>{{ p.get_statut_display }}</td>
+        <td>
+          {% if p.vente_convertie %}
+            <a class="btn btn-outline" href="{% url 'facture_pdf' p.vente_convertie.id %}">Facture #{{ p.vente_convertie.id }}</a>
+          {% else %}
+            <span class="muted">Non convertie</span>
+          {% endif %}
+        </td>
+        <td style="display:flex; gap:8px;">
+          <a class="btn btn-outline" href="{% url 'proforma_pdf' p.id %}">PDF</a>
+          <a class="btn btn-outline" href="{% url 'proforma_ticket_a4_pdf' p.id %}">Ticket A4</a>
+          {% if not p.vente_convertie %}
+          <form method="POST" action="{% url 'proforma_convertir' p.id %}" style="margin:0;">
+            {% csrf_token %}
+            <button class="btn btn-primary" type="submit">Convertir en facture</button>
+          </form>
+          {% else %}
+          <span class="badge ok">Convertie</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="muted">Aucune facture proforma</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+const searchInput = document.getElementById("searchProduit");
+const produitsListe = document.getElementById("produitsListe");
+const produitsGrid = document.getElementById("produitsGrid");
+
+searchInput.addEventListener("keyup", () => {
+  const val = searchInput.value.toLowerCase();
+  [...produitsListe.querySelectorAll("tbody tr")].forEach(tr => {
+    tr.style.display = tr.innerText.toLowerCase().includes(val) ? "" : "none";
+  });
+  [...produitsGrid.children].forEach(div => div.style.display = div.innerText.toLowerCase().includes(val) ? "" : "none");
+});
+
+document.getElementById("btnListe").onclick = () => { produitsListe.style.display="block"; produitsGrid.style.display="none"; };
+document.getElementById("btnGrille").onclick = () => { produitsListe.style.display="none"; produitsGrid.style.display="grid"; };
+
+function getCookie(name){let c=null;if(document.cookie){document.cookie.split(';').forEach(cookie=>{cookie=cookie.trim();if(cookie.startsWith(name+'='))c=decodeURIComponent(cookie.slice(name.length+1));});}return c;}
+function getCsrfToken(){
+  return getCookie("csrftoken") || (document.querySelector("[name=csrfmiddlewaretoken]") || {}).value || "";
+}
+
+async function postData(url,data){
+  try{
+    const res=await fetch(url,{
+      method:"POST",
+      credentials:"same-origin",
+      headers:{
+        "Content-Type":"application/json",
+        "X-CSRFToken":getCsrfToken(),
+        "X-Requested-With":"XMLHttpRequest"
+      },
+      body:JSON.stringify(data)
+    });
+    if(!res.ok){
+      alert("Impossible de mettre a jour le panier proforma.");
+      return;
+    }
+    const r=await res.json();
+    document.getElementById("panierContent").innerHTML=r.html;
+    applyDiscount();
+  }catch(err){
+    alert("Erreur reseau.");
+  }
+}
+
+const panierEndpoints = {
+  ajouter: "{% url 'ajouter_panier_proforma' %}",
+  retirer: "{% url 'retirer_panier_proforma' %}",
+  supprimer: "{% url 'supprimer_du_panier_proforma' %}",
+  modifier: "{% url 'modifier_quantite_proforma' %}",
+  modifierPrix: "{% url 'modifier_prix_panier_proforma' %}",
+  vider: "{% url 'vider_panier_proforma' %}",
+  remise: "{% url 'update_remise_panier_proforma' %}"
+};
+
+function ajouterAuPanier(id){postData(panierEndpoints.ajouter,{produit_id:id});}
+function retirerDuPanier(id){postData(panierEndpoints.retirer,{produit_id:id});}
+function supprimerDuPanier(id){postData(panierEndpoints.supprimer,{produit_id:id});}
+function modifierQuantite(id,q){postData(panierEndpoints.modifier,{produit_id:id,quantite:q});}
+function updatePrix(id, p, minPrix){
+  const prixSaisi = parseFloat(p || "0");
+  const min = parseFloat(minPrix || "0");
+  const prix = Number.isFinite(prixSaisi) ? Math.max(prixSaisi, min) : min;
+  postData(panierEndpoints.modifierPrix,{produit_id:id,prix});
+}
+function viderPanier(){postData(panierEndpoints.vider,{});}
+function updateRemise(id, type, value){postData(panierEndpoints.remise,{produit_id:id,remise_type:type,remise_value:value});}
+
+function applyDiscount() {
+  const type = document.getElementById('discountType').value;
+  const value = parseFloat(document.getElementById('discountValue').value || '0');
+  const totalEl = document.getElementById('totalGeneral');
+  const discountLine = document.getElementById('discountLine');
+  const marginLine = document.getElementById('marginLine');
+  if (!totalEl) return;
+  const base = parseFloat(totalEl.dataset.baseTotal || totalEl.dataset.total || '0');
+  const marginBase = marginLine ? parseFloat(marginLine.dataset.marginBase || '0') : 0;
+  let discount = 0;
+  if (type === 'percent') discount = base * (value / 100);
+  else if (type === 'amount') discount = value;
+  if (discount < 0) discount = 0;
+  if (discount > base) discount = base;
+  const total = base - discount;
+  if (discountLine) discountLine.textContent = discount.toFixed(2) + ' FCFA';
+  if (marginLine) {
+    const marge = marginBase - discount;
+    marginLine.textContent = marge.toFixed(2) + " FCFA";
+    marginLine.style.color = marge >= 0 ? "#166534" : "#b91c1c";
+    marginLine.style.fontWeight = "700";
+  }
+  totalEl.textContent = total.toFixed(2) + ' FCFA';
+  totalEl.dataset.total = total.toFixed(2);
+  document.getElementById('discountTypeInput').value = type;
+  document.getElementById('discountValueInput').value = value.toFixed(2);
+}
+
+document.getElementById('discountType').addEventListener('change', applyDiscount);
+document.getElementById('discountValue').addEventListener('input', applyDiscount);
+
+document.addEventListener("DOMContentLoaded", () => {
+  applyDiscount();
+});
+</script>
+
+{% endblock %}

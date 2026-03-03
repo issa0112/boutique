@@ -1,0 +1,153 @@
+﻿{% extends 'boutique/base.html' %}
+
+{% block page_title %}Salaires{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Salaires</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="toolbar" style="margin-bottom:12px;">
+  <div class="muted">Exports</div>
+  <div style="display:flex; gap:8px;">
+    <a class="btn btn-outline" href="{% url 'salaires_export_csv' %}">Exporter CSV</a>
+    <a class="btn btn-outline" href="{% url 'salaires_export_pdf' %}">Exporter PDF</a>
+    <span class="chip">Avances ouvertes: {{ avances_ouvertes_total }} FCFA</span>
+  </div>
+</div>
+
+<div class="grid grid-2">
+<div class="card">
+  <h3 style="margin-top:0;">Accorder une avance</h3>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-grid">
+      <input type="hidden" name="action" value="avance">
+      <select name="personnel_id" required>
+        <option value="">Personnel</option>
+        {% for p in personnels %}
+        <option value="{{ p.id }}">{{ p.prenom }} {{ p.nom }}</option>
+        {% endfor %}
+      </select>
+      <input type="date" name="date_avance">
+      <input type="number" step="0.01" min="0.01" name="montant" placeholder="Montant avance" required>
+      <input type="text" name="note" placeholder="Note (optionnel)">
+      <button type="submit" class="btn btn-primary">Accorder avance</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Payer un salarié</h3>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-grid">
+      <input type="hidden" name="action" value="payer_un">
+      <select name="personnel_id" required>
+        <option value="">Personnel</option>
+        {% for p in personnels %}
+        <option value="{{ p.id }}">{{ p.prenom }} {{ p.nom }}</option>
+        {% endfor %}
+      </select>
+      <input type="date" name="periode" required>
+      <input type="number" step="0.01" min="0" name="heures" placeholder="Heures (optionnel)">
+      <input type="number" step="0.01" min="0" name="taux_horaire" placeholder="Taux horaire (optionnel)">
+      <input type="number" step="0.01" min="0" name="prime" placeholder="Prime">
+      <input type="number" step="0.01" min="0" name="retenue" placeholder="Retenue">
+      <button type="submit" class="btn btn-primary">Payer le salarié</button>
+    </div>
+  </form>
+</div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <h3 style="margin-top:0;">Payer tous les salaires (lot)</h3>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-grid">
+      <input type="hidden" name="action" value="payer_lot">
+      <input type="date" name="periode" required>
+      <input type="number" step="0.01" min="0" name="heures" placeholder="Heures communes (optionnel)">
+      <input type="number" step="0.01" min="0" name="taux_horaire" placeholder="Taux commun (optionnel)">
+      <input type="number" step="0.01" min="0" name="prime" placeholder="Prime commune">
+      <input type="number" step="0.01" min="0" name="retenue" placeholder="Retenue commune">
+      <select name="exclude_ids" multiple style="min-height:140px;">
+        <option value="" disabled>Exclure un ou plusieurs salariés (Ctrl/Cmd + clic)</option>
+        {% for p in personnels_actifs %}
+        <option value="{{ p.id }}">{{ p.prenom }} {{ p.nom }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-primary">Payer en lot</button>
+    </div>
+  </form>
+  <div class="muted" style="margin-top:8px;">Les avances ouvertes des salariés payés sont automatiquement déduites puis soldées.</div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <h3 style="margin-top:0;">Historique des paies</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Personnel</th>
+        <th>Heures</th>
+        <th>Taux</th>
+        <th>Prime</th>
+        <th>Avance</th>
+        <th>Retenue</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for paie in paies %}
+      <tr>
+        <td>{{ paie.periode|date:"d/m/Y" }}</td>
+        <td>{{ paie.personnel.prenom }} {{ paie.personnel.nom }}</td>
+        <td>{{ paie.heures }}</td>
+        <td>{{ paie.taux_horaire }}</td>
+        <td>{{ paie.prime }}</td>
+        <td>{{ paie.avance }}</td>
+        <td>{{ paie.retenue }}</td>
+        <td>{{ paie.total }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="muted">Aucune paie</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <h3 style="margin-top:0;">Historique des avances</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Personnel</th>
+        <th>Montant</th>
+        <th>Statut</th>
+        <th>Soldée dans paie</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in avances %}
+      <tr>
+        <td>{{ a.date_avance|date:"d/m/Y" }}</td>
+        <td>{{ a.personnel.prenom }} {{ a.personnel.nom }}</td>
+        <td>{{ a.montant }}</td>
+        <td>{% if a.statut == "soldee" %}<span class="badge ok">Soldée</span>{% else %}<span class="badge warning">Ouverte</span>{% endif %}</td>
+        <td>{% if a.paie %}{{ a.paie.periode|date:"d/m/Y" }}{% else %}N/A{% endif %}</td>
+        <td>{{ a.note }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="muted">Aucune avance</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

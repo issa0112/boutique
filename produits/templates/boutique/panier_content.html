@@ -1,0 +1,74 @@
+﻿{% if panier %}
+<div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+  <button type="button" onclick="viderPanier()" class="btn btn-danger">Vider le panier</button>
+</div>
+
+<table class="table" style="margin-bottom:12px;">
+  <thead>
+    <tr>
+      <th>Produit</th>
+      <th>Qté</th>
+      <th>Prix</th>
+      <th>Remise</th>
+      <th>Total</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for key, item in panier.items %}
+    <tr>
+      <td>{{ item.nom }}</td>
+      <td>
+        <input type="number" value="{{ item.quantite }}" min="1"
+               onchange="modifierQuantite('{{ key }}', this.value)" style="width:60px;">
+      </td>
+      <td>
+        <input type="number"
+               value="{{ item.prix|default:item.prix_initial }}"
+               min="{{ item.prix_initial|default:item.prix }}"
+               step="0.01"
+               onchange="updatePrix('{{ key }}', this.value, {{ item.prix_initial|default:item.prix }})"
+               style="width:100px;">
+        <div class="muted" style="font-size:12px;">Min: {{ item.prix_initial|default:item.prix }} FCFA</div>
+      </td>
+      <td>
+        <select onchange="updateRemise('{{ key }}', this.value, document.getElementById('remiseValue-{{ key }}').value)">
+          <option value="" {% if item.remise_type == '' %}selected{% endif %}>Aucune</option>
+          <option value="percent" {% if item.remise_type == 'percent' %}selected{% endif %}>%</option>
+          <option value="amount" {% if item.remise_type == 'amount' %}selected{% endif %}>Fixe</option>
+        </select>
+        <input id="remiseValue-{{ key }}" type="number" value="{{ item.remise_value|default:0 }}" min="0" step="0.01"
+               onchange="updateRemise('{{ key }}', this.previousElementSibling.value, this.value)" style="width:70px;">
+      </td>
+      <td>{{ item.total }} FCFA</td>
+      <td>
+        <button type="button" class="btn btn-outline" onclick="ajouterAuPanier('{{ key }}')">+</button>
+        <button type="button" class="btn btn-outline" onclick="retirerDuPanier('{{ key }}')">-</button>
+        <button type="button" class="btn btn-outline" onclick="supprimerDuPanier('{{ key }}')">Supprimer</button>
+      </td>
+    </tr>
+    {% endfor %}
+    <tr>
+      <td colspan="4" style="text-align:right;">Sous-total :</td>
+      <td colspan="2" id="subTotal" data-subtotal="{{ subtotal|default:total_general }}">{{ subtotal|default:total_general }} FCFA</td>
+    </tr>
+    <tr>
+      <td colspan="4" style="text-align:right;">Remises lignes :</td>
+      <td colspan="2" id="lineDiscount">{{ remises_lignes|default:0 }} FCFA</td>
+    </tr>
+    <tr>
+      <td colspan="2" style="text-align:right;">Remise globale :</td>
+      <td id="discountLine">0 FCFA</td>
+      <td colspan="2" style="text-align:right;">Marge :</td>
+      <td id="marginLine" class="margin-value" data-margin-base="{{ marge_totale|default:0 }}">{{ marge_totale|default:0 }} FCFA</td>
+    </tr>
+    <tr style="font-weight:bold;">
+      <td colspan="4" style="text-align:right;">Total général :</td>
+      <td colspan="2" id="totalGeneral" data-total="{{ total_general }}" data-base-total="{{ total_general }}">{{ total_general }} FCFA</td>
+    </tr>
+  </tbody>
+</table>
+
+{% else %}
+<p class="muted">Aucun produit dans le panier</p>
+{% endif %}

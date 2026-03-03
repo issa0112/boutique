@@ -1,0 +1,88 @@
+{% extends 'boutique/base.html' %}
+
+{% block page_title %}Bons de commande{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Gestion des bons de commande</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="card" style="margin-bottom:16px;">
+  <div class="section-title">Nouveau bon de commande</div>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-grid">
+      <select name="fournisseur">
+        <option value="">-- Fournisseur (optionnel) --</option>
+        {% for f in fournisseurs %}
+          <option value="{{ f.id }}">{{ f.nom }}</option>
+        {% endfor %}
+      </select>
+      <select name="produit" required>
+        <option value="">-- Produit --</option>
+        {% for p in produits %}
+          <option value="{{ p.id }}">{{ p.nom }}</option>
+        {% endfor %}
+      </select>
+      <input type="number" name="quantite" min="1" value="1" required>
+      <input type="number" name="prix_unitaire" min="0" step="0.01" placeholder="Prix unitaire" required>
+      <select name="statut">
+        <option value="brouillon">Brouillon</option>
+        <option value="valide">Validé</option>
+        <option value="livre">Livré</option>
+        <option value="annule">Annulé</option>
+      </select>
+      <input type="text" name="note" placeholder="Note (optionnel)">
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-bottom:16px;">
+  <div class="summary-row total">
+    <span>Total bons de commande</span>
+    <span>{{ total_bons }} FCFA</span>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Date</th>
+        <th>Fournisseur</th>
+        <th>Produit</th>
+        <th>Qté</th>
+        <th>Prix U.</th>
+        <th>Total</th>
+        <th>Statut</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for bon in bons %}
+      <tr>
+        <td>{{ bon.id }}</td>
+        <td>{{ bon.date_commande|date:"d/m/Y H:i" }}</td>
+        <td>{% if bon.fournisseur %}{{ bon.fournisseur.nom }}{% else %}N/A{% endif %}</td>
+        <td>{% if bon.produit %}{{ bon.produit.nom }}{% else %}N/A{% endif %}</td>
+        <td>{{ bon.quantite }}</td>
+        <td>{{ bon.prix_unitaire }}</td>
+        <td>{{ bon.total }}</td>
+        <td>{{ bon.get_statut_display }}</td>
+        <td><a class="btn btn-outline" href="{% url 'bon_commande_pdf' bon.id %}">PDF</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="muted">Aucun bon de commande</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

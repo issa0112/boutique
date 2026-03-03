@@ -1,0 +1,51 @@
+{% extends 'boutique/base.html' %}
+
+{% block page_title %}Rapport remises{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Rapport des remises</h2>
+
+<div class="card" style="margin-bottom:12px;">
+  <div class="summary-row total">
+    <span>Total remises</span>
+    <span>{{ total_remises }} FCFA</span>
+  </div>
+  <div class="summary-row total">
+    <span>Total commissions</span>
+    <span>{{ total_commissions }} FCFA</span>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Date</th>
+        <th>Client</th>
+        <th>Total avant</th>
+        <th>Remises</th>
+        <th>Total final</th>
+        <th>Commission</th>
+        <th>Bon</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in ventes %}
+      <tr>
+        <td>{{ v.id }}</td>
+        <td>{{ v.date_vente|date:"d/m/Y H:i" }}</td>
+        <td>{% if v.client %}{{ v.client.nom }}{% else %}N/A{% endif %}</td>
+        <td>{{ v.total_before_discount }}</td>
+        <td>{{ v.total_discount }}</td>
+        <td>{{ v.total }}</td>
+        <td>{{ v.commission }}</td>
+        <td>{% if v.coupon_code %}{{ v.coupon_code }}{% else %}-{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="muted">Aucune vente</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

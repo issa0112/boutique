@@ -1,0 +1,134 @@
+﻿{% extends 'boutique/base.html' %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Aperçu</h2>
+
+<div class="grid grid-3 stat-grid">
+  <div class="card stat-card">
+    <div class="muted">Chiffre d'affaires total</div>
+    <div class="stat-value">{{ total_ventes }} FCFA</div>
+  </div>
+  <div class="card stat-card">
+    <div class="muted">Produits en stock bas</div>
+    <div class="stat-value">{{ stock_bas }}</div>
+  </div>
+  <div class="card stat-card">
+    <div class="muted">Alertes non lues</div>
+    <div class="stat-value">{{ alertes|length }}</div>
+  </div>
+</div>
+
+<div class="grid grid-3 stat-grid">
+  <div class="card stat-card">
+    <div class="muted">Total produits</div>
+    <div class="stat-value">{{ total_produits }}</div>
+  </div>
+  <div class="card stat-card">
+    <div class="muted">Total clients</div>
+    <div class="stat-value">{{ total_clients }}</div>
+  </div>
+  <div class="card stat-card">
+    <div class="muted">Total personnel</div>
+    <div class="stat-value">{{ total_personnel }}</div>
+  </div>
+</div>
+
+<div class="grid grid-3 stat-grid">
+  <div class="card stat-card">
+    <div class="muted">Nombre de ventes</div>
+    <div class="stat-value">{{ total_ventes_count }}</div>
+  </div>
+  <div class="card stat-card">
+    <div class="muted">Articles vendus</div>
+    <div class="stat-value">{{ total_articles_vendus }}</div>
+  </div>
+  <div class="card stat-card">
+    <div class="muted">Ticket moyen</div>
+    <div class="stat-value">{{ ticket_moyen }} FCFA</div>
+  </div>
+  <div class="card stat-card">
+    <div class="muted">Commissions cumulées</div>
+    <div class="stat-value">{{ total_commissions }} FCFA</div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <div class="toolbar">
+      <h2 class="page-title section-heading">Alertes</h2>
+    </div>
+    <div class="stack-sm">
+      {% for alerte in alertes %}
+        <div class="alert alert-error">
+          <strong>{{ alerte.type_alerte }}</strong>
+          {% if alerte.produit %} - {{ alerte.produit.nom }}{% endif %}
+          <div class="mt-8">
+            <a href="{% url 'alerte_lue' alerte.id %}" class="btn btn-outline">Marquer lu</a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="muted">Pas d'alertes</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="page-title section-heading">Top produits</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Produit</th>
+          <th>Quantité</th>
+          <th>CA</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in top_produits %}
+        <tr>
+          <td>{{ p.produit__nom }}</td>
+          <td>{{ p.qte }}</td>
+          <td>{{ p.ca }} FCFA</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" class="muted">Pas de données</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card mt-16">
+  <h2 class="page-title section-heading">Ventes récentes</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Client</th>
+        <th>Total</th>
+        <th>Commission</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for vente in ventes %}
+      <tr>
+        <td>{{ vente.id }}</td>
+        <td>{% if vente.client %}{{ vente.client.nom }}{% else %}N/A{% endif %}</td>
+        <td>{{ vente.total }} FCFA</td>
+        <td>{{ vente.commission }} FCFA</td>
+        <td>
+          <a class="btn btn-outline" href="{% url 'facture_pdf' vente.id %}">Facture PDF</a>
+          <a class="btn btn-outline" href="{% url 'ticket_caisse_pdf' vente.id %}">Ticket</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" class="muted">Pas de ventes</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

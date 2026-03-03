@@ -1,0 +1,55 @@
+{% block header %}
+
+<style>
+  .app-content-headerButton {
+    background-color: var(--app-content-secondary-color);
+  border: 1px solid var(--app-content-secondary-color);
+  color: var(--app-content-main-color);
+  font-size: 14px;
+  line-height: 24px;
+  border-radius: 4px;
+  padding: 0px 16px;
+  height: 32px;
+  /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-search'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E"); */
+  background-size: 16px;
+  background-repeat: no-repeat;
+  background-position: left 10px center;
+  /* width: 100%;
+  max-width: 320px; */
+  /* transition: 0.2s; */
+  border: 1px solid rgb(255, 255, 255);
+  /* transition: transform 0.5s; */
+  text-align:justify;
+  border-radius: 10px;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.app-content-headerButtonh:focus {
+  color: rgb(0, 255, 255);
+  /* background-color: #21212100; */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-search'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  outline-color: rgb(0, 255, 255);
+  box-shadow: -3px -3px 15px rgb(0, 255, 255);
+  transition: .1s;
+  transition-property: box-shadow;
+}
+.app-content-headerButton:hover {
+  outline-color: rgb(0, 255, 255);
+    box-shadow: -3px -3px 15px rgb(0, 255, 255);
+  /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236291fd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='feather feather-search'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E"); */
+}
+</style>
+<div class="app-content-header">
+    <h1 class="app-content-headerText">Produits</h1>
+    <button class="mode-switch" title="Switch Theme">
+      <svg class="moon" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" width="24" height="24" viewBox="0 0 24 24">
+        <defs></defs>
+        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+      </svg>
+    </button>
+    <a href="{% url 'ajout' %}">
+     <button class="app-content-headerButton">Ajout Produit</button>
+    </a>
+</div> 
+{% endblock header  %}

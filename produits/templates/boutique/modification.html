@@ -1,0 +1,395 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajout des produits</title>
+    <link rel="stylesheet" href="{% static 'style1.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'font-awesome.min.css' %}">
+    <style>
+        .keyboard {
+            position: absolute; /* Positionné absolument par rapport au document */
+            display: none; /* Masqué par défaut */
+            flex-wrap: wrap;
+            max-width: 600px;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 10px;
+            z-index: 1000; /* Assure que le clavier reste au-dessus des autres éléments */
+        }
+
+        /* From Uiverse.io by ShadowShahriar */
+.custom-button {
+  --border-radius: 15px;
+  --border-width: 4px;
+  text-transform: uppercase;
+  appearance: none;
+  position: relative;
+  padding: 1em 2em;
+  border: 0;
+  background-color: #212121;
+  font-family: "Roboto", Arial, "Segoe UI", sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: #fff;
+  z-index: 2;
+}
+
+.custom-button::after {
+  --m-i: linear-gradient(#000, #000);
+  --m-o: content-box, padding-box;
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  padding: var(--border-width);
+  border-radius: var(--border-radius);
+  background-image: conic-gradient(
+    #488cfb,
+    #29dbbc,
+    #ddf505,
+    #ff9f0e,
+    #e440bb,
+    #655adc,
+    #488cfb
+  );
+  -webkit-mask-image: var(--m-i), var(--m-i);
+  mask-image: var(--m-i), var(--m-i);
+  -webkit-mask-origin: var(--m-o);
+  mask-origin: var(--m-o);
+  -webkit-mask-clip: var(--m-o);
+  mask-composite: exclude;
+  -webkit-mask-composite: destination-out;
+  filter: hue-rotate(0);
+  animation: rotate-hue linear 500ms infinite;
+  animation-play-state: paused;
+}
+
+.custom-button:hover::after {
+  animation-play-state: running;
+}
+
+@keyframes rotate-hue {
+  to {
+    filter: hue-rotate(1turn);
+  }
+}
+
+.custom-button,
+.custom-button::after {
+  box-sizing: border-box;
+}
+
+.custom-button:active {
+  --border-width: 5px;
+}
+input, 
+textarea{
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ gap: 10px;
+ font-family: inherit;
+ font-size: 13px;
+ font-weight: 500;
+ text-transform: uppercase;
+ letter-spacing: 0.4px;
+ color: #7e97b8;
+ background-color: #e0e8ef;
+ border-style: solid;
+ border-width: 2px 2px 2px 2px;
+ border-color: rgba(255, 255, 255, 0.333);
+ border-radius: 40px 40px 40px 40px;
+ padding: 16px 24px 16px 28px;
+ transform: translate(0px, 0px) rotate(0deg);
+ transition: 0.2s;
+ box-shadow: -4px -2px 16px 0px #ffffff, 4px 2px 16px 0px rgb(95 157 231 / 48%);
+}
+select, 
+input[type="file"] {
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ gap: 10px;
+ font-family: inherit;
+ font-size: 13px;
+ font-weight: 500;
+ text-transform: uppercase;
+ letter-spacing: 0.4px;
+ color: #7e97b8;
+ background-color: #e0e8ef;
+ border-style: solid;
+ border-width: 2px 2px 2px 2px;
+ border-color: rgba(255, 255, 255, 0.333);
+ border-radius: 40px;
+ padding: 16px 24px 16px 28px;
+ transform: translate(0px, 0px) rotate(0deg);
+ transition: 0.2s;
+ box-shadow: -4px -2px 16px 0px #ffffff, 4px 2px 16px 0px rgb(95 157 231 / 48%);
+}
+
+
+ 
+button {
+    padding: 8px 15px;
+    border-radius: 15px !important;
+    margin: 5px 0px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    font-size: 18px !important;
+    font-weight: 300; */
+}
+
+
+        .key {
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            background: linear-gradient(217deg, rgba(255,0,0,.8), rgba(255,0,0,0) 70.71%),
+                        linear-gradient(127deg, rgba(0,255,0,.8), rgba(0,255,0,0) 70.71%),
+                        linear-gradient(336deg, rgba(0,0,255,.8), rgba(0,0,255,0) 70.71%);
+            text-align: center;
+            line-height: 50px;
+            border-radius: 5px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .key:active {
+            background-color: #bbb;
+        }
+
+        h3.text-center.mb-4 {
+            margin-bottom: 20px; /* Réduire l'espace sous le titre */
+        }
+        h5.text-center.mb-4 {
+            margin-bottom: 20px; /* Réduire l'espace sous le titre */
+        }
+
+        .form-group {
+            margin-bottom: 10px; /* Ajouter de l'espace entre les champs du formulaire */
+        }
+
+        .btn-block {
+            margin-top: 10px; /* Ajouter de l'espace au-dessus du bouton */
+        }
+    </style>
+</head>
+<body>
+    <!-- <h3 class="text-center mb-4">Ajout des produits</h3>
+    <h5 class="text-center mb-4 blue-text">
+        Veuillez noter que <br> Tous les champs sont obligatoires.
+    </h5> -->
+    <div class="container-fluid px-1 py-3 mx-auto"> <!-- Diminution du padding vertical -->
+        <div class="row d-flex justify-content-center">
+            <div class="col-xl-7 col-lg-8 col-md-9 col-11 text-center">
+                <div class="card">
+                    <h3 class="text-center mb-4">Modification des produits</h3>
+                    <h5 class="text-center mb-4 blue-text">
+                      Veuillez noter que <br> Tous les champs sont obligatoires.
+                  </h5>
+                    <form class="form-card" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        {% if messages %}
+                        <ul class="messages">
+                            {% for message in messages %}
+                            <li {% if message.tags %} class="{{ message.tags }}" style="color: red;" {% endif %}>
+                                {{ message }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+
+                        <div class="row justify-content-between text-left">
+                            <div class="form-group col-sm-6 flex-column d-flex">
+                                <label class="form-control-label px-3">Nom du Produit<span class="text-danger"> *</span></label>
+                                {{form.name}}
+                                <div class="text-danger">{{form.name.errors}}</div>
+
+                                {% if errors.name %}
+                                <div class="errors" style="color: red;">
+                                    <p>{{ errors.name }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group col-sm-6 flex-column d-flex">
+                                <label class="form-control-label px-3">Sélectionnez la catégorie<span class="text-danger"> *</span></label>
+                                {{form.category}}
+                                <div class="text-danger">{{form.category.errors}}</div>
+
+                                {% if errors.category %}
+                                <div class="errors" style="color: red;">
+                                    <p>{{ errors.category }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row justify-content-between text-left">
+                            <div class="form-group col-sm-6 flex-column d-flex">
+                                <label class="form-control-label px-3">Prix du produit<span class="text-danger"> *</span></label>
+                                {{form.price}}
+                                <div class="text-danger">{{form.price.errors}}</div>
+
+                                {% if errors.price %}
+                                <div class="errors" style="color: red;">
+                                    <p>{{ errors.price }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group col-sm-6 flex-column d-flex">
+                                <label class="form-control-label px-3">Quantité de produit<span class="text-danger"> *</span></label>
+                                {{form.quantite}}
+                                <div class="text-danger">{{form.quantite.errors}}</div>
+
+                                {% if errors.quantite %}
+                                <div class="errors" style="color: red;">
+                                    <p>{{ errors.quantite }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row justify-content-between text-left">
+                            <div class="form-group col-sm-6 flex-column d-flex">
+                                <label class="form-control-label px-3">Date d'expiration<span class="text-danger"> *</span></label>
+                                {{form.date_expiration}}
+                                <div class="text-danger">{{form.date_expiration.errors}}</div>
+
+                                {% if errors.date_expiration %}
+                                <div class="errors" style="color: red;">
+                                    <p>{{ errors.date_expiration }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group col-sm-6 flex-column d-flex">
+                                <label class="form-control-label px-3">L'image du produit<span class="text-danger"> *</span></label>
+                                {{form.image}}
+                                <div class="text-danger">{{form.image.errors}}</div>
+
+                                {% if errors.image %}
+                                <div class="errors" style="color: red;">
+                                    <p>{{ errors.image }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row justify-content-between text-left">
+                            <div class="form-group col-12 flex-column d-flex">
+                                <label class="form-control-label px-3">La description du produit<span class="text-danger"> *</span></label>
+                                {{form.description}}
+                                <div class="text-danger">{{form.description.errors}}</div>
+
+                                {% if errors.description %}
+                                <div class="errors" style="color: red;">
+                                    <p>{{ errors.description }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- <div class="row justify-content-end"> -->
+                            <!-- <div class="form-group col-sm-6"> -->
+                              <!-- <button type="submit" class="btn-block btn-primary custom-button">Enregistrer</button> -->
+                              <button type="submit" class=" custom-button">ENREGISTRER</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="keyboard" id="keyboard">
+        <!-- Row 1 -->
+        <div class="key">A</div>
+        <div class="key">Z</div>
+        <div class="key">E</div>
+        <div class="key">R</div>
+        <div class="key">T</div>
+        <div class="key">Y</div>
+        <div class="key">U</div>
+        <div class="key">I</div>
+        <div class="key">O</div>
+        <div class="key">P</div>
+        <!-- Row 2 -->
+        <div class="key">Q</div>
+        <div class="key">S</div>
+        <div class="key">D</div>
+        <div class="key">F</div>
+        <div class="key">G</div>
+        <div class="key">H</div>
+        <div class="key">J</div>
+        <div class="key">K</div>
+        <div class="key">L</div>
+        <div class="key">M</div>
+        <!-- Row 3 -->
+        <div class="key">W</div>
+        <div class="key">X</div>
+        <div class="key">C</div>
+        <div class="key">V</div>
+        <div class="key">B</div>
+        <div class="key">N</div>
+        <div class="key"><---</div> <!-- Backspace -->
+        <div class="key"> </div> <!-- Space -->
+    </div>
+
+    <script>
+        const keyboard = document.getElementById('keyboard');
+        let activeInput = null;
+
+        function showKeyboard(input) {
+            activeInput = input;
+
+            // Obtenir les coordonnées du champ actif
+            const rect = input.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+            // Positionner le clavier juste en dessous du champ de saisie
+            keyboard.style.top = (rect.bottom + scrollTop) + 'px';
+            keyboard.style.left = rect.left + 'px';
+
+            keyboard.style.display = 'flex'; // Afficher le clavier
+        }
+
+        keyboard.addEventListener('click', function(e) {
+            if (e.target.classList.contains('key')) {
+                if (activeInput) {
+                    let key = e.target.textContent;
+
+                    if (key === '<---') {
+                        activeInput.value = activeInput.value.slice(0, -1); // Supprimer le dernier caractère
+                    } else {
+                        activeInput.value += key; // Ajouter le caractère au champ actif
+                    }
+                }
+            }
+        });
+
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            input.addEventListener('focus', function() {
+                showKeyboard(input);
+            });
+        });
+
+        document.querySelectorAll('textarea').forEach(input => {
+            input.addEventListener('focus', function() {
+                showKeyboard(input);
+            });
+        });
+
+        document.addEventListener('click', function(event) {
+            if (!keyboard.contains(event.target) && !event.target.matches('input[type="text"], textarea')) {
+                keyboard.style.display = 'none'; // Masquer le clavier lorsqu'on clique en dehors
+            }
+        });
+    </script>
+</body>
+</html>

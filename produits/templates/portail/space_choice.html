@@ -1,0 +1,148 @@
+{% extends 'boutique/base.html' %}
+
+{% block page_title %}Choix de l'espace{% endblock %}
+
+{% block content %}
+<style>
+  .sidebar,
+  .topbar {
+    display: none !important;
+  }
+
+  .app-shell {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .app-main,
+  body.sidebar-collapsed .app-main {
+    margin-left: 0 !important;
+    min-height: 100vh;
+  }
+
+  .content {
+    padding: 0 !important;
+    min-height: 100vh;
+  }
+
+  .space-choice-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background:
+      radial-gradient(1100px 620px at -10% -14%, rgba(26, 115, 232, 0.78) 0%, transparent 62%),
+      radial-gradient(980px 560px at 110% -2%, rgba(0, 188, 212, 0.5) 0%, transparent 58%),
+      radial-gradient(880px 520px at 84% 88%, rgba(66, 133, 244, 0.44) 0%, transparent 56%),
+      radial-gradient(880px 500px at 14% 94%, rgba(34, 211, 238, 0.34) 0%, transparent 58%),
+      radial-gradient(640px 340px at 54% 38%, rgba(37, 99, 235, 0.26) 0%, transparent 65%),
+      linear-gradient(130deg, #d9e8ff 0%, #d5f3ff 36%, #dfe4ff 72%, #e6ecf8 100%);
+  }
+
+  .space-choice-page::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(0deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)),
+      repeating-linear-gradient(120deg, rgba(255, 255, 255, 0.08) 0px, rgba(255, 255, 255, 0.08) 2px, rgba(255, 255, 255, 0) 2px, rgba(255, 255, 255, 0) 12px);
+    opacity: 0.5;
+  }
+
+  .space-choice-shell {
+    width: min(980px, 100%);
+    position: relative;
+    z-index: 1;
+  }
+
+  .space-choice-card {
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    background: rgba(255, 255, 255, 0.24);
+    box-shadow: 0 18px 45px rgba(26, 43, 58, 0.18);
+    border-radius: 24px;
+    padding: 26px 22px;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .space-choice-title {
+    margin: 0;
+    text-align: center;
+    color: #0a1f44;
+    font-family: "Sora", sans-serif;
+  }
+
+  .space-choice-subtitle {
+    margin: 8px 0 18px;
+    text-align: center;
+    color: #3b537d;
+  }
+
+  .space-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .space-box {
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.56);
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .space-box h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: #0f2b58;
+  }
+
+  .space-box p {
+    margin: 0 0 12px;
+    color: #3b537d;
+  }
+
+  .space-link {
+    width: 100%;
+    justify-content: center;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    color: #f6fffd;
+    background: linear-gradient(160deg, #1b74f0 0%, #0a5bd8 56%, #08397f 100%);
+    box-shadow: 0 12px 24px rgba(10, 70, 170, 0.3);
+  }
+
+  .space-link:hover {
+    background: linear-gradient(160deg, #1663ce 0%, #0847aa 100%);
+  }
+
+  @media (max-width: 900px) {
+    .space-choice-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<section class="space-choice-page">
+  <div class="space-choice-shell">
+    <div class="space-choice-card">
+      <h2 class="space-choice-title">Portail DOUNIYA</h2>
+      <p class="space-choice-subtitle">Choisissez votre espace de travail.</p>
+      <div class="space-choice-grid">
+        <div class="space-box">
+          <h3>Entrer dans Boutique</h3>
+          <p>Gestion commerciale, ventes, comptabilite et reception des commandes magasin.</p>
+          <a href="{% url 'dashboard' %}" class="btn space-link">Aller a Boutique</a>
+        </div>
+        <div class="space-box">
+          <h3>Entrer dans Magasin</h3>
+          <p>Traitement des commandes internes, sorties et bordereaux de livraison.</p>
+          <a href="{% url 'magasin_dashboard' %}" class="btn space-link">Aller a Magasin</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

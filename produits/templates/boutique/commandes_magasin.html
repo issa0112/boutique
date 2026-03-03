@@ -1,0 +1,218 @@
+{% extends 'boutique/base.html' %}
+
+{% block page_title %}Commandes Magasin{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Commandes Boutique vers Magasin</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="card">
+  <h3 style="margin-top:0;">Émettre un bon de commande interne</h3>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="form-grid">
+      <select name="produit_id" required>
+        <option value="">Produit</option>
+        {% for p in produits %}
+        <option value="{{ p.id }}">{{ p.nom }}</option>
+        {% endfor %}
+      </select>
+      <input type="number" name="quantite" min="1" placeholder="Quantité demandée" required>
+      <input type="text" name="message" placeholder="Message au magasin (optionnel)">
+      <button type="submit" class="btn btn-primary">Envoyer au magasin</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-top:14px;">
+  <h3 style="margin-top:0;">Stock magasin disponible</h3>
+  <table class="table">
+    <thead><tr><th>Produit</th><th>Qté disponible</th><th>Stock min</th></tr></thead>
+    <tbody>
+      {% for s in stocks_magasin %}
+      <tr>
+        <td>{{ s.produit.nom }}</td>
+        <td>{{ s.quantite }}</td>
+        <td>{{ s.stock_min }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="muted">Aucun stock magasin configuré.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:14px;">
+  <h3 style="margin-top:0;">Scanner QR du bordereau</h3>
+  <div class="grid grid-2">
+    <div>
+      <video id="qr-video" style="width:100%; border-radius:12px; background:#111;" playsinline></video>
+      <canvas id="qr-canvas" style="display:none;"></canvas>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button type="button" class="btn btn-outline" id="startScan">Démarrer caméra</button>
+        <button type="button" class="btn btn-outline" id="stopScan">Arrêter</button>
+      </div>
+    </div>
+    <div>
+      <input type="text" id="scanResult" placeholder="Le token QR scanné apparaît ici">
+      <button type="button" class="btn btn-primary" id="injectScan" style="margin-top:8px;">Injecter dans la validation</button>
+      <div class="muted" style="margin-top:8px;">Le scan remplit automatiquement le premier champ QR de validation visible.</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px;">
+  <div class="toolbar" style="margin-bottom:10px;">
+    <h3 style="margin:0;">Suivi des commandes internes</h3>
+    <div style="display:flex; gap:8px;">
+      <a class="btn btn-outline" href="{% url 'magasin_audit_export_csv' %}">Audit CSV</a>
+      <a class="btn btn-outline" href="{% url 'magasin_audit_export_pdf' %}">Audit PDF</a>
+    </div>
+  </div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Date</th>
+        <th>Produit</th>
+        <th>Qté</th>
+        <th>Statut</th>
+        <th>Bordereau</th>
+        <th>Expédiée par</th>
+        <th>Action réception</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in commandes %}
+      <tr>
+        <td>{{ c.numero }}</td>
+        <td>{{ c.created_at|date:"d/m/Y H:i" }}</td>
+        <td>{{ c.produit.nom }}</td>
+        <td>{{ c.quantite }}</td>
+        <td>{{ c.get_statut_display }}</td>
+        <td>
+          {% if c.bordereau_numero %}{{ c.bordereau_numero }}{% else %}-{% endif %}
+          {% if c.bordereau_numero %}
+          <div><a class="btn btn-outline" href="{% url 'magasin_bordereau_pdf' c.id %}" target="_blank">Bordereau PDF</a></div>
+          {% endif %}
+          {% if c.bordereau_image %}
+          <div><a class="btn btn-outline" href="{{ c.bordereau_image.url }}" target="_blank">Voir</a></div>
+          {% endif %}
+        </td>
+        <td>{% if c.magasinier_user %}{{ c.magasinier_user.username }}{% else %}-{% endif %}</td>
+        <td>
+          {% if c.statut == "expediee" %}
+          <form method="POST" action="{% url 'valider_reception_commande_magasin' c.id %}" enctype="multipart/form-data" style="display:grid; gap:6px; min-width:230px;">
+            {% csrf_token %}
+            <input type="file" name="preuve_reception_image" accept="image/*,.pdf" required>
+            <input type="text" class="qr-scan-input" name="qr_scan" placeholder="Coller le scan QR (TOKEN:...)" required>
+            <button class="btn btn-primary" type="submit">Valider réception colis</button>
+          </form>
+          {% elif c.statut == "validee" %}
+            <span class="badge ok">Validée</span>
+            {% if c.preuve_reception_image %}
+            <div><a class="btn btn-outline" href="{{ c.preuve_reception_image.url }}" target="_blank">Preuve</a></div>
+            {% endif %}
+          {% else %}
+            <span class="muted">En attente magasin</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="muted">Aucune commande interne.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:14px;">
+  <h3 style="margin-top:0;">Journal d'audit des commandes</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Commande</th>
+        <th>Action</th>
+        <th>Espace</th>
+        <th>Acteur</th>
+        <th>Détails</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in audits %}
+      <tr>
+        <td>{{ a.created_at|date:"d/m/Y H:i" }}</td>
+        <td>{{ a.commande.numero }}</td>
+        <td>{{ a.get_action_display }}</td>
+        <td>{{ a.get_espace_display }}</td>
+        <td>{% if a.acteur %}{{ a.acteur.username }}{% else %}N/A{% endif %}</td>
+        <td>{{ a.details }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="muted">Aucune trace d'audit.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+(() => {
+  const video = document.getElementById("qr-video");
+  const canvas = document.getElementById("qr-canvas");
+  const scanResult = document.getElementById("scanResult");
+  let stream = null;
+  let scanning = false;
+
+  async function startScan() {
+    if (scanning) return;
+    scanning = true;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      video.srcObject = stream;
+      await video.play();
+      tick();
+    } catch (e) {
+      scanning = false;
+      alert("Caméra indisponible: " + e);
+    }
+  }
+  function stopScan() {
+    scanning = false;
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    video.pause();
+    video.srcObject = null;
+  }
+  function tick() {
+    if (!scanning) return;
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code && code.data) {
+        scanResult.value = code.data;
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  document.getElementById("startScan").addEventListener("click", startScan);
+  document.getElementById("stopScan").addEventListener("click", stopScan);
+  document.getElementById("injectScan").addEventListener("click", () => {
+    const val = (scanResult.value || "").trim();
+    if (!val) return;
+    const target = document.querySelector(".qr-scan-input");
+    if (target) target.value = val;
+  });
+})();
+</script>
+{% endblock %}

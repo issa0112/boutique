@@ -1,0 +1,351 @@
+﻿{% extends 'boutique/base.html' %}
+{% load static %}
+
+{% block page_title %}Ventes{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Nouvelle vente</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="sales-grid">
+  <div class="card">
+    <div class="toolbar mb-12">
+      <div class="toolbar-group">
+        <input id="searchProduit" class="search-input" placeholder="Rechercher un produit...">
+        <a href="{% url 'produits' %}" class="btn btn-primary">Nouveau produit</a>
+        {% comment %} <span class="chip">Clique pour ajouter</span> {% endcomment %}
+      </div>
+      <div class="toggle-buttons">
+        <button type="button" class="btn btn-outline" id="btnListe">Liste</button>
+        <button type="button" class="btn btn-outline" id="btnGrille">Grille</button>
+      </div>
+    </div>
+
+    <div id="produitsListe" style="display:block;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Prix</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in produits %}
+          <tr onclick="ajouterAuPanier('{{ p.id }}')" style="cursor:pointer;">
+            <td>
+              <div class="product-card product-row-card">
+                {% if p.image %}
+                  <img class="product-thumb" src="{{ p.image.url }}" alt="{{ p.nom }}">
+                {% else %}
+                  <div class="product-thumb"></div>
+                {% endif %}
+                <div class="product-meta">
+                  <div class="name">{{ p.nom }}</div>
+                  <div class="sub">ID #{{ p.id }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ p.prix }} FCFA</td>
+            <td>{{ p.quantite }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div id="produitsGrid" style="display:none;" class="grid sales-products-grid">
+      {% for p in produits %}
+      <div onclick="ajouterAuPanier('{{ p.id }}')" class="product-grid-card">
+        <div class="product-grid-media">
+          <span class="product-stock-badge {% if p.quantite|default:0 <= p.stock_min|default:0 %}is-low{% else %}is-normal{% endif %}">
+            {% if p.quantite|default:0 <= p.stock_min|default:0 %}Stock faible{% else %}Stock normal{% endif %}
+          </span>
+          {% if p.image %}
+            <img class="product-grid-thumb" src="{{ p.image.url }}" alt="{{ p.nom }}">
+          {% else %}
+            <div class="product-grid-thumb product-grid-thumb-empty"></div>
+          {% endif %}
+        </div>
+        <div class="product-grid-body">
+          <div class="product-grid-name">{{ p.nom }}</div>
+          <div class="product-grid-price">{{ p.prix }} FCFA</div>
+          <div class="product-grid-stock">Stock: {{ p.quantite }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <form method="POST" id="panierForm" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="section-title">Client</div>
+      <select name="client" class="mb-12">
+        <option value="">-- Sélectionner un client --</option>
+        {% for c in clients %}<option value="{{ c.id }}">{{ c.nom }}</option>{% endfor %}
+      </select>
+
+      <div class="section-title">Panier</div>
+      <div id="panierContent">{% include "boutique/panier_content.html" with panier=panier total_general=total_general subtotal=subtotal remises_lignes=remises_lignes marge_totale=marge_totale %}</div>
+
+      <div class="section-title mt-12">Remise globale</div>
+      <div class="payment-group">
+        <div class="form-grid">
+          <select id="discountType">
+            <option value="">Aucune remise</option>
+            <option value="percent">Remise %</option>
+            <option value="amount">Remise fixe</option>
+          </select>
+          <input type="number" id="discountValue" placeholder="Valeur" min="0" step="0.01">
+        </div>
+        <input type="hidden" name="discount_type" id="discountTypeInput">
+        <input type="hidden" name="discount_value" id="discountValueInput">
+      </div>
+
+      <div class="section-title mt-12">Bon d'achat</div>
+      <div class="payment-group">
+        <input type="text" name="coupon_code" id="couponCode" placeholder="Code bon d'achat">
+        <div class="muted">Le bon est vérifié lors de la validation.</div>
+      </div>
+
+      <div class="section-title mt-12">Commission interne</div>
+      <div class="payment-group">
+        <input type="number" name="commission" id="commission" placeholder="Montant commissionnaire" min="0" step="0.01" value="0">
+        <div class="muted">Ce montant est enregistré en base et n'apparaît pas sur la facture client.</div>
+      </div>
+
+      <div class="section-title mt-12">Paiement</div>
+      <div class="payment-group">
+        <div class="payment-options">
+          <label class="payment-option">
+            <input type="radio" name="paiement" value="livraison" onclick="togglePaymentOptions()">
+            <span>Paiement à la livraison</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="paiement" value="cash" onclick="togglePaymentOptions()">
+            <span>Paiement en cash</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="paiement" value="cheque" onclick="togglePaymentOptions()">
+            <span>Paiement par chèque</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="paiement" value="mobile" onclick="togglePaymentOptions()">
+            <span>Orange Money</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="paiement" value="transaction_bancaire" onclick="togglePaymentOptions()">
+            <span>Transaction bancaire</span>
+          </label>
+          <label class="payment-option">
+            <input type="radio" name="paiement" value="remise" onclick="togglePaymentOptions()">
+            <span>Remise vendeur</span>
+          </label>
+        </div>
+
+        <div id="money-options" style="display:none;">
+          <input type="hidden" name="moneyType" value="orange">
+          <div id="form-orange" class="money-form mt-8" style="display:block;">
+            <input type="text" name="orange_numero" placeholder="Numéro Orange Money">
+          </div>
+        </div>
+
+        <div id="cash-section" class="mt-8" style="display:none;">
+          <label>Montant donné</label>
+          <input type="number" id="montantDonne" class="search-input">
+          <div class="muted">Rendu : <span id="rendu">0</span> FCFA</div>
+        </div>
+
+        <div id="cheque-section" class="mt-8" style="display:none;">
+          <label>Image du chèque</label>
+          <input type="file" name="cheque_image" accept="image/*">
+        </div>
+
+        <div id="transaction-section" class="mt-8" style="display:none;">
+          <label>Information clé (obligatoire)</label>
+          <input type="text" id="paiementInfoCle" name="paiement_info_cle" placeholder="Référence, code ou identifiant bancaire">
+        </div>
+
+        <div id="remise-section" class="mt-8" style="display:none;">
+          <div class="muted">
+            La vente est enregistrée en mode remise vendeur (paiement au nom d'un vendeur, sans nouvelle facture).
+          </div>
+        </div>
+      </div>
+
+      <div class="sticky-actions mt-14">
+        <button type="submit" id="validateSaleBtn" class="btn btn-primary full-width">Valider impayé</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const searchInput = document.getElementById("searchProduit");
+const produitsListe = document.getElementById("produitsListe");
+const produitsGrid = document.getElementById("produitsGrid");
+
+searchInput.addEventListener("keyup", () => {
+  const val = searchInput.value.toLowerCase();
+  [...produitsListe.querySelectorAll("tbody tr")].forEach(tr => {
+    tr.style.display = tr.innerText.toLowerCase().includes(val) ? "" : "none";
+  });
+  [...produitsGrid.children].forEach(div => div.style.display = div.innerText.toLowerCase().includes(val) ? "" : "none");
+});
+
+document.getElementById("btnListe").onclick = () => { produitsListe.style.display="block"; produitsGrid.style.display="none"; };
+document.getElementById("btnGrille").onclick = () => { produitsListe.style.display="none"; produitsGrid.style.display="grid"; };
+
+function getCookie(name){let c=null;if(document.cookie){document.cookie.split(';').forEach(cookie=>{cookie=cookie.trim();if(cookie.startsWith(name+'='))c=decodeURIComponent(cookie.slice(name.length+1));});}return c;}
+function getCsrfToken(){
+  return getCookie("csrftoken") || (document.querySelector("[name=csrfmiddlewaretoken]") || {}).value || "";
+}
+
+async function postData(url,data){
+  try{
+    const res=await fetch(url,{
+      method:"POST",
+      credentials:"same-origin",
+      headers:{
+        "Content-Type":"application/json",
+        "X-CSRFToken":getCsrfToken(),
+        "X-Requested-With":"XMLHttpRequest"
+      },
+      body:JSON.stringify(data)
+    });
+    if(!res.ok){
+      console.error("Erreur AJAX", res.status, url);
+      alert("Impossible de mettre à jour le panier. Réessayez.");
+      return;
+    }
+    const r=await res.json();
+    document.getElementById("panierContent").innerHTML=r.html;
+    initPaiementCash();
+    applyDiscount();
+  }catch(err){
+    console.error("Erreur réseau", err);
+    alert("Erreur réseau. Vérifiez la connexion puis réessayez.");
+  }
+}
+
+const panierEndpoints = {
+  ajouter: "{% url 'ajouter_panier' %}",
+  retirer: "{% url 'retirer_panier' %}",
+  supprimer: "{% url 'supprimer_du_panier' %}",
+  modifier: "{% url 'modifier_quantite' %}",
+  modifierPrix: "{% url 'modifier_prix_panier' %}",
+  vider: "{% url 'vider_panier' %}",
+  remise: "{% url 'update_remise_panier' %}"
+};
+
+function ajouterAuPanier(id){postData(panierEndpoints.ajouter,{produit_id:id});}
+function retirerDuPanier(id){postData(panierEndpoints.retirer,{produit_id:id});}
+function supprimerDuPanier(id){postData(panierEndpoints.supprimer,{produit_id:id});}
+function modifierQuantite(id,q){postData(panierEndpoints.modifier,{produit_id:id,quantite:q});}
+function updatePrix(id, p, minPrix){
+  const prixSaisi = parseFloat(p || "0");
+  const min = parseFloat(minPrix || "0");
+  const prix = Number.isFinite(prixSaisi) ? Math.max(prixSaisi, min) : min;
+  postData(panierEndpoints.modifierPrix,{produit_id:id,prix});
+}
+function viderPanier(){postData(panierEndpoints.vider,{});}
+function updateRemise(id, type, value){postData(panierEndpoints.remise,{produit_id:id,remise_type:type,remise_value:value});}
+
+function togglePaymentOptions() {
+  const selectedEl = document.querySelector('input[name="paiement"]:checked');
+  const selected = selectedEl ? selectedEl.value : "";
+  const moneyOptions = document.getElementById("money-options");
+  const cashSection = document.getElementById("cash-section");
+  const chequeSection = document.getElementById("cheque-section");
+  const transactionSection = document.getElementById("transaction-section");
+  const remiseSection = document.getElementById("remise-section");
+  const paiementInfoCleInput = document.getElementById("paiementInfoCle");
+  const validateBtn = document.getElementById("validateSaleBtn");
+  if (!selectedEl) {
+    if (moneyOptions) moneyOptions.style.display = "none";
+    if (cashSection) cashSection.style.display = "none";
+    if (chequeSection) chequeSection.style.display = "none";
+    if (transactionSection) transactionSection.style.display = "none";
+    if (remiseSection) remiseSection.style.display = "none";
+    if (paiementInfoCleInput) {
+      paiementInfoCleInput.required = false;
+      paiementInfoCleInput.value = "";
+    }
+    if (validateBtn) validateBtn.textContent = "Valider impayé";
+    return;
+  }
+  if (moneyOptions) moneyOptions.style.display = selected === "mobile" ? "block" : "none";
+  if (cashSection) cashSection.style.display = selected === "cash" ? "block" : "none";
+  if (chequeSection) chequeSection.style.display = selected === "cheque" ? "block" : "none";
+  if (transactionSection) transactionSection.style.display = selected === "transaction_bancaire" ? "block" : "none";
+  if (remiseSection) remiseSection.style.display = selected === "remise" ? "block" : "none";
+  if (paiementInfoCleInput) {
+    const isTransaction = selected === "transaction_bancaire";
+    paiementInfoCleInput.required = isTransaction;
+    if (!isTransaction) paiementInfoCleInput.value = "";
+  }
+  if (validateBtn) {
+    validateBtn.textContent = selected ? "Valider vente" : "Valider impayé";
+  }
+}
+
+function applyDiscount() {
+  const type = document.getElementById('discountType').value;
+  const value = parseFloat(document.getElementById('discountValue').value || '0');
+  const totalEl = document.getElementById('totalGeneral');
+  const discountLine = document.getElementById('discountLine');
+  const marginLine = document.getElementById('marginLine');
+  if (!totalEl) return;
+  const base = parseFloat(totalEl.dataset.baseTotal || totalEl.dataset.total || '0');
+  const marginBase = marginLine ? parseFloat(marginLine.dataset.marginBase || '0') : 0;
+  let discount = 0;
+  if (type === 'percent') {
+    discount = base * (value / 100);
+  } else if (type === 'amount') {
+    discount = value;
+  }
+  if (discount < 0) discount = 0;
+  if (discount > base) discount = base;
+  const total = base - discount;
+  if (discountLine) discountLine.textContent = discount.toFixed(2) + ' FCFA';
+  if (marginLine) {
+    const marge = marginBase - discount;
+    marginLine.textContent = marge.toFixed(2) + " FCFA";
+    marginLine.style.color = marge >= 0 ? "#166534" : "#b91c1c";
+    marginLine.style.fontWeight = "700";
+  }
+  totalEl.textContent = total.toFixed(2) + ' FCFA';
+  totalEl.dataset.total = total.toFixed(2);
+  document.getElementById('discountTypeInput').value = type;
+  document.getElementById('discountValueInput').value = value.toFixed(2);
+}
+
+document.getElementById('discountType').addEventListener('change', applyDiscount);
+document.getElementById('discountValue').addEventListener('input', applyDiscount);
+
+document.addEventListener("DOMContentLoaded", () => {
+  initPaiementCash();
+  togglePaymentOptions();
+  applyDiscount();
+});
+
+function initPaiementCash(){
+  const radios=document.querySelectorAll("input[name='paiement']");
+  const cashSection=document.getElementById("cash-section");
+  const montantInput=document.getElementById("montantDonne");
+  const renduSpan=document.getElementById("rendu");
+  if(!radios.length)return;
+  function calc(){const t=document.getElementById("totalGeneral");const total=t?parseFloat(t.dataset.total)||0:0;const m=parseFloat(montantInput.value)||0;const r=m-total;renduSpan.innerText=r>=0?r:"Reste "+Math.abs(r);renduSpan.style.color=r>=0?"blue":"red";}
+  radios.forEach(r=>r.addEventListener("change",()=>{if(r.value==="cash"){cashSection.style.display="block";calc();}else{cashSection.style.display="none";montantInput.value="";renduSpan.innerText="0";renduSpan.style.color="black";}}));
+  montantInput.addEventListener("input",calc);
+}
+</script>
+
+{% endblock %}

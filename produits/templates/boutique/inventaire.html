@@ -1,0 +1,272 @@
+﻿{% extends 'boutique/base.html' %}
+
+{% block page_title %}Inventaire{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Inventaire (scan QR)</h2>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-error{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="card">
+  <h3 style="margin-top:0;">Scanner avec la caméra</h3>
+  <div class="grid grid-2">
+    <div>
+      <video id="qr-video" style="width:100%; border-radius:12px; background:#111;" playsinline></video>
+      <canvas id="qr-canvas" style="display:none;"></canvas>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <label class="muted" style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="beepToggle" checked> Bip</label>
+        <label class="muted" style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="hapticToggle" checked> Vibration</label>
+        <label class="muted" style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="autoSubmitToggle"> Auto-valider</label>
+        <label class="muted" style="display:flex; align-items:center; gap:6px;"><input type="checkbox" id="continuousToggle" checked> Scan continu</label>
+        <button type="button" class="btn btn-outline" id="toggleTorch">Flash</button>
+        <button type="button" class="btn btn-outline" id="startScan">Démarrer caméra</button>
+        <button type="button" class="btn btn-outline" id="stopScan">Arrêter</button>
+      </div>
+      <div class="muted" style="margin-top:8px;">Le scan caméra nécessite HTTPS ou localhost.</div>
+    </div>
+    <div>
+      <label>Résultat scan</label>
+      <input type="text" id="scanResult" placeholder="Le résultat du QR code s'affiche ici">
+      <div class="muted" style="margin-top:8px;">Tu peux copier ce texte directement dans le formulaire ci-dessous.</div>
+      <div class="muted" style="margin-top:8px;">Appareil: <span id="deviceIdBox">?</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:16px;">
+  <h3 style="margin-top:0;">Scanner un produit</h3>
+  <form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="current_produit_filter" value="{{ filters.produit_id }}">
+    <input type="hidden" name="current_user_filter" value="{{ filters.user_id }}">
+    <input type="hidden" name="current_date_from" value="{{ filters.date_from }}">
+    <input type="hidden" name="current_date_to" value="{{ filters.date_to }}">
+    <div class="form-grid">
+      <input type="text" name="scan_data" id="scanData" placeholder="Coller le contenu du QR code">
+      <select name="produit_id">
+        <option value="">Ou sélectionner un produit</option>
+        {% for p in produits %}
+        <option value="{{ p.id }}" {% if filters.produit_id == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nom }}</option>
+        {% endfor %}
+      </select>
+      <select name="mode" required>
+        <option value="">Action</option>
+        <option value="ajouter">Ajouter au stock</option>
+        <option value="retirer">Retirer du stock</option>
+        <option value="fixer">Fixer la quantité</option>
+      </select>
+      <input type="number" name="quantite" placeholder="Quantité" required>
+      <button type="submit" class="btn btn-primary">Valider</button>
+    </div>
+  </form>
+</div>
+
+<div class="toolbar" style="margin-top:16px;">
+  <div class="muted">Historique inventaire</div>
+  <div style="display:flex; gap:8px;">
+    <a class="btn btn-outline" href="{% url 'inventaire_export_csv' %}?produit_id={{ filters.produit_id }}&user_id={{ filters.user_id }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}">Exporter CSV</a>
+    <a class="btn btn-outline" href="{% url 'inventaire_export_pdf' %}?produit_id={{ filters.produit_id }}&user_id={{ filters.user_id }}&date_from={{ filters.date_from }}&date_to={{ filters.date_to }}">Exporter PDF</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+  <form method="GET" class="form-grid">
+    <select name="produit_id">
+      <option value="">Produit</option>
+      {% for p in produits %}
+      <option value="{{ p.id }}" {% if filters.produit_id == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nom }}</option>
+      {% endfor %}
+    </select>
+    <select name="user_id">
+      <option value="">Utilisateur</option>
+      {% for u in users %}
+      <option value="{{ u.id }}" {% if filters.user_id == u.id|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+      {% endfor %}
+    </select>
+    <input type="date" name="date_from" value="{{ filters.date_from }}">
+    <input type="date" name="date_to" value="{{ filters.date_to }}">
+    <button type="submit" class="btn btn-primary">Filtrer</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top:12px;">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Produit</th>
+        <th>Type</th>
+        <th>Qté</th>
+        <th>Avant</th>
+        <th>Après</th>
+        <th>Utilisateur</th>
+        <th>Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in mouvements %}
+      <tr>
+        <td>{{ m.created_at|date:"d/m/Y H:i" }}</td>
+        <td>{{ m.produit.nom }}</td>
+        <td>{{ m.type_mouvement }}</td>
+        <td>{{ m.quantite }}</td>
+        <td>{{ m.stock_avant }}</td>
+        <td>{{ m.stock_apres }}</td>
+        <td>{% if m.user %}{{ m.user.username }}{% else %}N/A{% endif %}</td>
+        <td>{{ m.note }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="muted">Aucun mouvement</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+let scanning = false;
+let videoStream = null;
+let lastScan = '';
+let lastScanAt = 0;
+const COOLDOWN_MS = 1200;
+const video = document.getElementById('qr-video');
+const canvas = document.getElementById('qr-canvas');
+const scanResult = document.getElementById('scanResult');
+const scanData = document.getElementById('scanData');
+const hapticToggle = document.getElementById('hapticToggle');
+const beepToggle = document.getElementById('beepToggle');
+const autoSubmitToggle = document.getElementById('autoSubmitToggle');
+const torchBtn = document.getElementById('toggleTorch');
+let torchOn = false;
+const continuousToggle = document.getElementById('continuousToggle');
+const deviceIdBox = document.getElementById('deviceIdBox');
+
+function getDeviceId() {
+  const key = 'inventaire_device_id';
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = 'DEV-' + Math.random().toString(36).slice(2, 10).toUpperCase();
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
+if (deviceIdBox) {
+  deviceIdBox.textContent = getDeviceId();
+}
+
+function beep() {
+  if (!beepToggle || !beepToggle.checked) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.value = 0.05;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => {
+      osc.stop();
+      ctx.close();
+    }, 120);
+  } catch (e) {
+  }
+}
+
+function supportsTorch(track) {
+  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  return !!caps.torch;
+}
+
+async function setTorch(on) {
+  if (!videoStream) return;
+  const track = videoStream.getVideoTracks()[0];
+  if (!supportsTorch(track)) {
+    alert('Flash non support? sur cet appareil.');
+    return;
+  }
+  try {
+    await track.applyConstraints({ advanced: [{ torch: on }] });
+    torchOn = on;
+  } catch (e) {
+    alert('Impossible d'activer le flash: ' + e);
+  }
+}
+
+function vibrate() {
+  if (!hapticToggle || !hapticToggle.checked) return;
+  if (navigator.vibrate) navigator.vibrate([80]);
+}
+
+async function startScan() {
+  if (scanning) return;
+  scanning = true;
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    video.srcObject = videoStream;
+    await video.play();
+    tick();
+  } catch (e) {
+    alert("Cam?ra indisponible : " + e);
+    scanning = false;
+  }
+}
+
+function stopScan() {
+  scanning = false;
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+    videoStream = null;
+  }
+  video.pause();
+  video.srcObject = null;
+}
+
+function tick() {
+  if (!scanning) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    if (code && code.data) {
+      const form = scanData.closest('form');
+      const modeSelect = form.querySelector('select[name="mode"]');
+      const qtyInput = form.querySelector('input[name="quantite"]');
+      const canSubmit = autoSubmitToggle && autoSubmitToggle.checked && modeSelect.value && qtyInput.value;
+
+      const now = Date.now();
+      if (code.data !== lastScan || (now - lastScanAt) > COOLDOWN_MS) {
+        lastScan = code.data;
+        lastScanAt = now;
+        scanResult.value = code.data;
+        scanData.value = code.data;
+        beep();
+        vibrate();
+        if (canSubmit) {
+          if (continuousToggle && !continuousToggle.checked) {
+            stopScan();
+          }
+          form.submit();
+        }
+      }
+    }
+  }
+  if (!continuousToggle || continuousToggle.checked) {
+  requestAnimationFrame(tick);
+}
+
+}
+
+document.getElementById('startScan').addEventListener('click', startScan);
+document.getElementById('stopScan').addEventListener('click', stopScan);
+</script>
+{% endblock %}
