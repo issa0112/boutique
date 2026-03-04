@@ -21,11 +21,30 @@ ALLOWED_HOSTS = [
     for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if h.strip()
 ]
-CSRF_TRUSTED_ORIGINS = [
+_csrf_from_env = [
     o.strip()
     for o in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
     if o.strip()
 ]
+
+CSRF_TRUSTED_ORIGINS = list(_csrf_from_env)
+
+# If CSRF trusted origins are not explicitly configured, infer them from
+# allowed hosts and Render's external URL to avoid login POST 403 in prod.
+if not CSRF_TRUSTED_ORIGINS:
+    inferred_origins = set()
+    for host in ALLOWED_HOSTS:
+        if host in {"localhost", "127.0.0.1"}:
+            continue
+        inferred_origins.add(f"https://{host}")
+        if DEBUG:
+            inferred_origins.add(f"http://{host}")
+
+    render_external_url = (os.getenv("RENDER_EXTERNAL_URL") or "").strip()
+    if render_external_url.startswith(("http://", "https://")):
+        inferred_origins.add(render_external_url.rstrip("/"))
+
+    CSRF_TRUSTED_ORIGINS = sorted(inferred_origins)
 
 INSTALLED_APPS = [
     "django.contrib.admin",

@@ -9,6 +9,8 @@ class SpaceAccessMiddleware:
             "/connexion/",
             "/deconnexion/",
             "/admin/login/",
+            "/favicon.ico",
+            "/robots.txt",
         }
 
     def __call__(self, request):

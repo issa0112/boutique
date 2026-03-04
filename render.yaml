@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: boutique
+    env: python
+    buildCommand: pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput
+    startCommand: gunicorn boutique.wsgi:application --log-file -
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "boutique-o3ra.onrender.com"
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: "https://boutique-o3ra.onrender.com"
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        value: "True"
+      - key: DATABASE_URL
+        sync: false
