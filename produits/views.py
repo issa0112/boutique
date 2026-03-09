@@ -120,6 +120,27 @@ def _regenerate_product_qr(produit):
     produit.qr_code.save(f"produit_{produit.id}.png", File(buffer), save=False)
 
 
+def _storage_file_exists(field_file):
+    try:
+        return bool(field_file and field_file.name and field_file.storage.exists(field_file.name))
+    except Exception:
+        return False
+
+
+def _prepare_product_media(produit, regenerate_qr=False):
+    if produit.image and not _storage_file_exists(produit.image):
+        produit.image = None
+
+    qr_exists = _storage_file_exists(produit.qr_code)
+    if regenerate_qr and not qr_exists:
+        _regenerate_product_qr(produit)
+        produit.save(update_fields=["qr_code"])
+    elif produit.qr_code and not qr_exists:
+        produit.qr_code = None
+
+    return produit
+
+
 def _normalize_csv_header(header):
     normalized = unicodedata.normalize("NFKD", str(header or ""))
     without_accents = "".join(c for c in normalized if not unicodedata.combining(c))
@@ -424,7 +445,7 @@ def produits(request):
 
         return redirect("produits")
 
-    produits_list = Produit.objects.all()
+    produits_list = [_prepare_product_media(p, regenerate_qr=True) for p in Produit.objects.all()]
     fournisseurs = Fournisseur.objects.all()
     categories = Category.objects.all()
     return render(request, "boutique/produits.html", {
@@ -823,7 +844,7 @@ def ventes(request):
             messages.success(request, f"Vente #{vente.id} enregistrée avec succès.")
         return redirect("ventes")
 
-    produits_list = Produit.objects.all()
+    produits_list = [_prepare_product_media(p) for p in Produit.objects.all()]
     clients_list = Client.objects.all()
     panier = request.session.get("panier", {})
     if not panier:
@@ -2643,7 +2664,7 @@ def bon_commandes(request):
 
     bons = BonCommande.objects.select_related("fournisseur", "produit").order_by("-date_commande")[:200]
     fournisseurs = Fournisseur.objects.order_by("nom")
-    produits = Produit.objects.order_by("nom")
+    produits = [_prepare_product_media(p) for p in Produit.objects.order_by("nom")]
     total_bons = bons.aggregate(total=Sum("total")).get("total") or Decimal("0.00")
     return render(request, "boutique/bon_commandes.html", {
         "bons": bons,

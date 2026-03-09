@@ -104,17 +104,17 @@
         {% for p in produits %}
         <tr data-id="{{ p.id }}" data-nom="{{ p.nom|lower }}" data-categorie="{% if p.category %}{{ p.category.nom|lower }}{% else %}{% endif %}" data-fournisseur="{% if p.fournisseur %}{{ p.fournisseur.nom|lower }}{% else %}{% endif %}">
           <td>{{ p.id }}</td>
-          <td class="editable" data-field="nom">{{ p.nom }}</td>
+          <td class="editable" data-field="nom" title="{{ p.nom }}">{{ p.nom }}</td>
           <td class="editable" data-field="prix">{{ p.prix|floatformat:2 }}</td>
           <td class="editable" data-field="quantite">{{ p.quantite }}</td>
           <td class="editable" data-field="stock_min">{{ p.stock_min }}</td>
-          <td class="editable-select" data-field="fournisseur">{% if p.fournisseur %}{{ p.fournisseur.nom }}{% else %}N/A{% endif %}</td>
-          <td class="editable-select" data-field="categorie">{% if p.category %}{{ p.category.nom }}{% else %}N/A{% endif %}</td>
+          <td class="editable-select" data-field="fournisseur" title="{% if p.fournisseur %}{{ p.fournisseur.nom }}{% else %}N/A{% endif %}">{% if p.fournisseur %}{{ p.fournisseur.nom }}{% else %}N/A{% endif %}</td>
+          <td class="editable-select" data-field="categorie" title="{% if p.category %}{{ p.category.nom }}{% else %}N/A{% endif %}">{% if p.category %}{{ p.category.nom }}{% else %}N/A{% endif %}</td>
           <td class="editable-image">
             {% if p.image %}
               <img src="{{ p.image.url }}" alt="Image" class="product-image-sm">
             {% else %}
-              <span class="muted">Aucune image</span>
+              <img src="/static/images/logodounya.png" alt="Image par défaut" class="product-image-sm">
             {% endif %}
           </td>
           <td class="qr-code">
@@ -139,7 +139,7 @@
         {% if p.image %}
           <img src="{{ p.image.url }}" alt="Image" class="product-grid-thumb">
         {% else %}
-          <div class="product-grid-thumb product-grid-thumb-empty"></div>
+          <img src="/static/images/logodounya.png" alt="Image par défaut" class="product-grid-thumb">
         {% endif %}
         </div>
       </div>
@@ -282,19 +282,24 @@
           let num = parseFloat(value);
           const formatted = !isNaN(num) ? num.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value;
           cell.innerText = cell.tagName === "TD" ? formatted : `Prix : ${formatted}`;
+          if (cell.tagName === "TD") cell.title = formatted;
         } else if (field === "fournisseur" || field === "categorie") {
           const opt = options.find(o => o.id == value);
           const label = field === "categorie" ? "Catégorie : " : "Fournisseur : ";
           const text = opt ? opt.name : "N/A";
           cell.innerText = cell.tagName === "TD" ? text : `${label}${text}`;
+          if (cell.tagName === "TD") cell.title = text;
           if (row) row.dataset[field] = opt ? opt.name.toLowerCase() : "";
           if (card) card.dataset[field] = opt ? opt.name.toLowerCase() : "";
         } else if (field === "quantite") {
           cell.innerText = cell.tagName === "TD" ? value : `Stock : ${value}`;
+          if (cell.tagName === "TD") cell.title = value;
         } else if (field === "stock_min") {
           cell.innerText = cell.tagName === "TD" ? value : `Stock min : ${value}`;
+          if (cell.tagName === "TD") cell.title = value;
         } else {
           cell.innerText = value;
+          if (cell.tagName === "TD") cell.title = value;
           if (field === "nom") {
             if (row) row.dataset.nom = value.toLowerCase();
             if (card) card.dataset.nom = value.toLowerCase();

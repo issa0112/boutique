@@ -41,7 +41,7 @@
                 {% if p.image %}
                   <img class="product-thumb" src="{{ p.image.url }}" alt="{{ p.nom }}">
                 {% else %}
-                  <div class="product-thumb"></div>
+                  <img class="product-thumb" src="/static/images/logodounya.png" alt="Image par défaut">
                 {% endif %}
                 <div class="product-meta">
                   <div class="name">{{ p.nom }}</div>
@@ -67,7 +67,7 @@
           {% if p.image %}
             <img class="product-grid-thumb" src="{{ p.image.url }}" alt="{{ p.nom }}">
           {% else %}
-            <div class="product-grid-thumb product-grid-thumb-empty"></div>
+            <img class="product-grid-thumb" src="/static/images/logodounya.png" alt="Image par défaut">
           {% endif %}
         </div>
         <div class="product-grid-body">

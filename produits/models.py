@@ -70,7 +70,7 @@ class Produit(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, default=1)
     date_ajout = models.DateTimeField(default=timezone.now)
     date_expiration = models.DateField(null=True, blank=True)
-    image = models.ImageField(null=True, blank=True, upload_to='media/')
+    image = models.ImageField(null=True, blank=True, upload_to="produits/")
     qr_code = models.ImageField(upload_to="qr_codes/", null=True, blank=True)
 
     def __str__(self):
