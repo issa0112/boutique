@@ -2835,7 +2835,7 @@ def proformas(request):
 
     proformas_list = FactureProforma.objects.select_related("client", "produit", "vente_convertie").order_by("-date_creation")[:200]
     clients = Client.objects.order_by("nom")
-    produits = Produit.objects.order_by("nom")
+    produits = [_prepare_product_media(p) for p in Produit.objects.order_by("nom")]
     panier = request.session.get("panier_proforma", {})
     totals = _recalc_panier(panier)
     total_proformas = proformas_list.aggregate(total=Sum("total")).get("total") or Decimal("0.00")
